@@ -149,6 +149,7 @@
           class="px-3 py-1.5 text-xs rounded-lg font-medium" x-text="showCalc ? '隱藏計算欄' : '顯示計算欄 Rev/GP'">
         </button>
         <button @click="exportCurrentVersionExcel()" class="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700 font-medium">📥 匯出 Excel</button>
+        <button @click="exportCurrentVersionDbExcel()" class="px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg hover:bg-teal-700 font-medium">📥 匯出 DB格式</button>
         <button @click="saveAll()" class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 font-medium">💾 儲存</button>
       </div>
 
@@ -212,9 +213,9 @@
                     <td style="min-width:80px">
                       <input type="number" x-model.number="row.volumes[mi]" class="ginput ginput-num" placeholder="0">
                     </td>
-                    <td :class="showCalc ? 'gcalc' : 'hidden'" x-text="fmtN(rowRevenue(row,mi))"></td>
-                    <td :class="showCalc ? 'gcalc' : 'hidden'" x-text="fmtN(rowBomCost(row,mi))"></td>
-                    <td :class="showCalc ? 'gcalc' : 'hidden'"
+                    <td x-show="showCalc" class="gcalc" x-text="fmtN(rowRevenue(row,mi))"></td>
+                    <td x-show="showCalc" class="gcalc" x-text="fmtN(rowBomCost(row,mi))"></td>
+                    <td x-show="showCalc" class="gcalc"
                         :style="rowGP(row,mi)>=0?'color:#16a34a':'color:#dc2626'"
                         x-text="fmtN(rowGP(row,mi))"></td>
                   </template>
@@ -297,6 +298,7 @@
                 <button @click="openEditVersionModal(v)" class="text-blue-500 text-xs hover:underline mr-2">編輯</button>
                 <button @click="switchToVersion(v.id)" class="text-green-600 text-xs hover:underline mr-2">開啟</button>
                 <button @click="exportVersionExcel(v.id)" class="text-emerald-600 text-xs hover:underline mr-2">Excel</button>
+                <button @click="exportVersionDbExcel(v.id)" class="text-teal-600 text-xs hover:underline mr-2">DB格式</button>
                 <button @click="deleteVersion(v.id)" class="text-red-500 text-xs hover:underline">刪除</button>
               </td>
             </tr>
@@ -1331,6 +1333,7 @@ function fcstApp() {
 
     // ── Excel export ──
     exportCurrentVersionExcel() { if (this.currentVersionId) this.exportVersionExcel(this.currentVersionId); },
+    exportCurrentVersionDbExcel() { if (this.currentVersionId) this.exportVersionDbExcel(this.currentVersionId); },
     exportVersionExcel(vId) {
       const v=this.versions.find(x=>x.id===vId); if (!v) return;
       const months=this.genMonths(v.startMonth,v.numMonths);
@@ -1363,6 +1366,46 @@ function fcstApp() {
       XLSX.utils.book_append_sheet(wb,ws,v.label.slice(0,31));
       XLSX.writeFile(wb,`FCST_${v.label.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
       this.showToast('Excel 已匯出');
+    },
+
+    // ── DB format export (one row per customer-model-month) ──
+    exportVersionDbExcel(vId) {
+      const v=this.versions.find(x=>x.id===vId); if (!v) return;
+      const months=this.genMonths(v.startMonth,v.numMonths);
+      const rows=this.fcstRows.filter(r=>r.versionId===vId);
+      const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const headers=['FCST Month','FCST Version','BU','Acc Mgr','Customer','Model',
+                     'Product Line','Category2','RD Site','MFG Site','Category1',
+                     'Volume','Revenue','BOM Cost','Gross Profit'];
+      const wsData=[headers];
+      for (const row of rows) {
+        const cust=this.customers.find(c=>c.id===row.customerId);
+        const model=this.models.find(m=>m.id===row.modelId);
+        const pl=model?this.productLines.find(p=>p.id===model.plId):null;
+        const accMgr=cust?this.accMgrs.find(a=>a.id===cust.accMgrId):null;
+        const bu=cust?this.bus.find(b=>b.id===cust.buId):null;
+        const rd=model?this.rdSites.find(s=>s.id===model.rdSiteId):null;
+        const mfg=model?this.mfgSites.find(s=>s.id===model.mfgSiteId):null;
+        months.forEach((m,mi)=>{
+          const [y,mo]=m.split('-');
+          const mLabel=MO[+mo-1]+'-'+y.slice(2);
+          const vol=Number(row.volumes[mi])||0;
+          const p=this.getPricing(row.modelId,row.customerId,m);
+          const asp=Number(p?.asp)||0, bom=Number(p?.bom)||0;
+          wsData.push([
+            mLabel, v.label,
+            bu?.name||'', accMgr?.name||'', cust?.name||'', model?.name||'',
+            pl?.name||'', model?.category2||row.category2||'',
+            rd?.name||'', mfg?.name||'', row.category1||'',
+            vol, vol*asp, vol*bom, vol*(asp-bom)
+          ]);
+        });
+      }
+      const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet(wsData);
+      ws['!cols']=[...Array(11).fill({wch:14}),...Array(4).fill({wch:12})];
+      XLSX.utils.book_append_sheet(wb,ws,'DB');
+      XLSX.writeFile(wb,`FCST_DB_${v.label.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
+      this.showToast('資料庫格式 Excel 已匯出');
     },
   };
 }
