@@ -13,7 +13,6 @@
   input[type=number]::-webkit-outer-spin-button,
   input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
-  /* Grid table */
   .gtable{border-collapse:collapse;font-size:12px}
   .gtable th,.gtable td{border:1px solid #e2e8f0;padding:3px 5px;white-space:nowrap}
   .gtable thead th{background:#f1f5f9;font-weight:600;position:sticky;top:0;z-index:20}
@@ -29,36 +28,33 @@
   .month-hdr{background:#bfdbfe;text-align:center;font-weight:700}
   .month-sub{background:#dbeafe;text-align:center;font-size:10px;color:#1e40af}
 
-  /* Sticky left columns */
   .sc0{position:sticky;left:0;z-index:15;background:white}
-  .sc1{position:sticky;left:150px;z-index:15;background:white}
-  .sc2{position:sticky;left:300px;z-index:15;background:white}
-  .sc3{position:sticky;left:420px;z-index:15;background:white}
+  .sc1{position:sticky;left:130px;z-index:15;background:white}
+  .sc2{position:sticky;left:260px;z-index:15;background:white}
+  .sc3{position:sticky;left:380px;z-index:15;background:white}
   .gtable tbody tr:hover .sc0,
   .gtable tbody tr:hover .sc1,
   .gtable tbody tr:hover .sc2,
   .gtable tbody tr:hover .sc3{background:#f0f9ff}
-  .gtable tfoot .sc0,.gtable tfoot .sc1,.gtable tfoot .sc2,.gtable tfoot .sc3{background:#dbeafe}
+  .gtable tfoot .sc0{background:#dbeafe}
 
-  .tscroll{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 320px)}
+  .tscroll{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 340px)}
 
-  /* Modal */
-  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center}
-  .modal-box{background:white;border-radius:8px;padding:24px;min-width:420px;max-width:600px;max-height:90vh;overflow-y:auto}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center}
+  .modal-box{background:white;border-radius:10px;padding:24px;min-width:440px;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
 
-  /* Badge */
   .badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:600}
+  .panel{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:14px}
+  .panel-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:8px}
 
-  /* Scrollbar */
   ::-webkit-scrollbar{width:6px;height:6px}
   ::-webkit-scrollbar-track{background:#f1f5f9}
   ::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:3px}
-  ::-webkit-scrollbar-thumb:hover{background:#64748b}
 </style>
 </head>
 <body class="bg-gray-100 text-gray-800 text-sm" x-data="fcstApp()" x-init="init()" x-cloak>
 
-<!-- ===================== HEADER ===================== -->
+<!-- HEADER -->
 <div class="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-lg">
   <div class="max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between">
     <div>
@@ -66,9 +62,7 @@
       <p class="text-xs text-blue-200">Sales Forecast Data Collection Platform</p>
     </div>
     <div class="flex gap-2">
-      <button @click="exportBackup()" class="text-xs px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded border border-white/30">
-        📤 匯出備份
-      </button>
+      <button @click="exportBackup()" class="text-xs px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded border border-white/30">📤 匯出備份</button>
       <label class="text-xs px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded border border-white/30 cursor-pointer">
         📥 匯入備份
         <input type="file" accept=".json" class="hidden" @change="importBackup($event)">
@@ -77,7 +71,7 @@
   </div>
 </div>
 
-<!-- ===================== MAIN TABS ===================== -->
+<!-- MAIN TABS -->
 <div class="bg-white border-b shadow-sm">
   <div class="max-w-screen-2xl mx-auto px-4 flex gap-1">
     <template x-for="t in mainTabs" :key="t.key">
@@ -91,73 +85,70 @@
 
 <div class="max-w-screen-2xl mx-auto px-4 py-4">
 
-<!-- ===================== TAB: FCST INPUT ===================== -->
+<!-- ==================== TAB: FCST INPUT ==================== -->
 <div x-show="activeTab==='fcst'">
 
-  <!-- Version Panel -->
+  <!-- Version + BU + AccMgr Panel -->
   <div class="bg-white rounded-xl border shadow-sm p-4 mb-3">
     <div class="flex flex-wrap items-end gap-3">
       <div>
         <label class="block text-xs text-gray-500 mb-1">FCST 版本 Version</label>
-        <select x-model="currentVersionId" @change="onVersionChange()" class="border rounded-lg px-3 py-1.5 text-sm min-w-[240px] focus:ring-2 focus:ring-blue-400">
-          <option value="">— 選擇版本 Select Version —</option>
+        <select x-model="currentVersionId" @change="onVersionChange()" class="border rounded-lg px-3 py-1.5 text-sm min-w-[220px]">
+          <option value="">— 選擇版本 —</option>
           <template x-for="v in versions" :key="v.id">
             <option :value="v.id" x-text="v.label + ' [' + v.dataType + ']'"></option>
           </template>
         </select>
       </div>
-      <button @click="openNewVersionModal()" class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 font-medium">
-        ＋ 新建版本
-      </button>
+      <button @click="openNewVersionModal()" class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 font-medium">＋ 新建版本</button>
+
+      <!-- Session-level BU & AccMgr -->
+      <div class="border-l pl-3 flex gap-3 items-end">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">BU <span class="text-gray-400 font-normal">(共同設定)</span></label>
+          <select x-model="sessionBuId" @change="sessionAccMgrId=''" class="border rounded-lg px-2 py-1.5 text-xs">
+            <option value="">All BU</option>
+            <template x-for="b in bus" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Acc Mgr <span class="text-gray-400 font-normal">(共同設定)</span></label>
+          <select x-model="sessionAccMgrId" class="border rounded-lg px-2 py-1.5 text-xs">
+            <option value="">All Acc Mgr</option>
+            <template x-for="a in sessionAccMgrs" :key="a.id"><option :value="a.id" x-text="a.name"></option></template>
+          </select>
+        </div>
+      </div>
+
       <template x-if="currentVersion">
-        <div class="flex flex-wrap gap-4 text-xs border-l pl-4 text-gray-500">
+        <div class="flex flex-wrap gap-3 text-xs border-l pl-3 text-gray-500">
           <span>Data Type: <strong class="text-gray-700" x-text="currentVersion.dataType"></strong></span>
-          <span>起始月份: <strong class="text-gray-700" x-text="currentVersion.startMonth"></strong></span>
-          <span>涵蓋月份: <strong class="text-gray-700" x-text="currentMonths.join(', ')"></strong></span>
+          <span>月份: <strong class="text-gray-700" x-text="currentMonths.join(' / ')"></strong></span>
           <span>筆數: <strong class="text-blue-600" x-text="currentVersionRowCount"></strong></span>
         </div>
       </template>
     </div>
   </div>
 
-  <!-- Filter + Actions (only when version selected) -->
+  <!-- Filter + Actions -->
   <template x-if="currentVersionId">
     <div>
       <div class="bg-white rounded-xl border shadow-sm p-3 mb-3 flex flex-wrap items-center gap-2">
         <span class="text-xs text-gray-500 font-medium">篩選:</span>
-        <select x-model="ff.buId" @change="ff.accMgrId=''; ff.customerId=''" class="border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-400">
-          <option value="">All BU</option>
-          <template x-for="b in bus" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
-        </select>
-        <select x-model="ff.accMgrId" @change="ff.customerId=''" class="border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-400">
-          <option value="">All Acc Mgr</option>
-          <template x-for="a in ffAccMgrs" :key="a.id"><option :value="a.id" x-text="a.name"></option></template>
-        </select>
-        <select x-model="ff.customerId" class="border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-400">
+        <select x-model="ff.customerId" class="border rounded px-2 py-1 text-xs">
           <option value="">All Customer</option>
-          <template x-for="c in ffCustomers" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
+          <template x-for="c in sessionCustomers" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
         </select>
-        <button @click="ff={buId:'',accMgrId:'',customerId:''}" class="text-xs text-gray-400 hover:text-gray-600">✕ 清除</button>
-
+        <button @click="ff.customerId=''" class="text-xs text-gray-400 hover:text-gray-600">✕</button>
         <div class="flex-1"></div>
-
-        <button @click="addEmptyRow()" class="px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 font-medium">
-          ＋ 新增行
-        </button>
-        <button @click="openLoadModelsModal()" class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-lg hover:bg-indigo-700 font-medium">
-          ⬇ 載入 Customer 所有模型
-        </button>
+        <button @click="addEmptyRow()" class="px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 font-medium">＋ 新增行</button>
+        <button @click="openLoadModelsModal()" class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-lg hover:bg-indigo-700 font-medium">⬇ 載入 Customer 模型</button>
         <button @click="showCalc=!showCalc"
           :class="showCalc ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-          class="px-3 py-1.5 text-xs rounded-lg font-medium">
-          🧮 <span x-text="showCalc ? '隱藏計算欄' : '顯示計算欄 Rev/GP'"></span>
+          class="px-3 py-1.5 text-xs rounded-lg font-medium" x-text="showCalc ? '隱藏計算欄' : '顯示計算欄 Rev/GP'">
         </button>
-        <button @click="exportCurrentVersionExcel()" class="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700 font-medium">
-          📥 匯出 Excel
-        </button>
-        <button @click="saveAll()" class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 font-medium">
-          💾 儲存
-        </button>
+        <button @click="exportCurrentVersionExcel()" class="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700 font-medium">📥 匯出 Excel</button>
+        <button @click="saveAll()" class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 font-medium">💾 儲存</button>
       </div>
 
       <!-- FCST Grid -->
@@ -165,24 +156,22 @@
         <div class="tscroll">
           <table class="gtable w-full">
             <thead>
-              <!-- Row 1: group headers -->
               <tr>
-                <th class="sc0 text-left" style="min-width:150px;left:0">Customer</th>
-                <th class="sc1 text-left" style="min-width:150px;left:150px">Model</th>
-                <th class="sc2 text-left" style="min-width:120px;left:300px">Project / Cat2</th>
-                <th class="sc3 text-left" style="min-width:90px;left:420px">Category1</th>
-                <template x-for="(m, mi) in currentMonths" :key="'mh'+mi">
+                <th class="sc0 text-left" style="min-width:130px;left:0">Customer</th>
+                <th class="sc1 text-left" style="min-width:130px;left:130px">Model</th>
+                <th class="sc2 text-left" style="min-width:120px;left:260px">Project / Cat2</th>
+                <th class="sc3 text-left" style="min-width:90px;left:380px">Category1</th>
+                <template x-for="(m,mi) in currentMonths" :key="'mh'+mi">
                   <th :colspan="showCalc ? 4 : 1" class="month-hdr" x-text="m"></th>
                 </template>
                 <th style="min-width:56px">操作</th>
               </tr>
-              <!-- Row 2: sub-column headers -->
               <tr>
                 <th class="sc0" style="left:0"></th>
-                <th class="sc1" style="left:150px"></th>
-                <th class="sc2" style="left:300px"></th>
-                <th class="sc3" style="left:420px"></th>
-                <template x-for="(m, mi) in currentMonths" :key="'ms'+mi">
+                <th class="sc1" style="left:130px"></th>
+                <th class="sc2" style="left:260px"></th>
+                <th class="sc3" style="left:380px"></th>
+                <template x-for="(m,mi) in currentMonths" :key="'ms'+mi">
                   <template x-for="col in monthCols" :key="'c'+mi+col.key">
                     <th :class="col.key==='vol' ? 'month-sub font-bold' : (showCalc ? 'month-sub' : 'hidden')"
                         x-text="col.label" style="min-width:80px"></th>
@@ -194,50 +183,43 @@
             <tbody>
               <template x-for="(row, ri) in displayRows" :key="row.id">
                 <tr>
-                  <!-- Customer -->
                   <td class="sc0" style="left:0">
                     <select x-model="row.customerId" @change="onRowCustomerChange(row)" class="ginput">
                       <option value="">— Customer —</option>
                       <template x-for="c in customers" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
                     </select>
                   </td>
-                  <!-- Model -->
-                  <td class="sc1" style="left:150px">
+                  <td class="sc1" style="left:130px">
                     <select x-model="row.modelId" @change="onRowModelChange(row)" class="ginput">
                       <option value="">— Model —</option>
                       <template x-for="m in customerModels(row.customerId)" :key="m.id"><option :value="m.id" x-text="m.name"></option></template>
                     </select>
                   </td>
-                  <!-- Category2 -->
-                  <td class="sc2" style="left:300px">
-                    <input type="text" x-model="row.category2" class="ginput" placeholder="Project name...">
+                  <td class="sc2" style="left:260px">
+                    <select x-model="row.category2" class="ginput">
+                      <option value="">—</option>
+                      <template x-for="c2 in modelCat2Options(row.modelId)" :key="c2"><option :value="c2" x-text="c2"></option></template>
+                    </select>
                   </td>
-                  <!-- Category1 -->
-                  <td class="sc3" style="left:420px">
+                  <td class="sc3" style="left:380px">
                     <select x-model="row.category1" class="ginput">
                       <option value="">—</option>
                       <template x-for="c1 in cat1List" :key="c1"><option :value="c1" x-text="c1"></option></template>
                     </select>
                   </td>
-                  <!-- Month columns -->
-                  <template x-for="(m, mi) in currentMonths" :key="'rv'+ri+mi">
-                    <!-- Vol -->
+                  <template x-for="(m,mi) in currentMonths" :key="'rv'+ri+mi">
                     <td style="min-width:80px">
                       <input type="number" x-model.number="row.volumes[mi]" class="ginput ginput-num" placeholder="0">
                     </td>
-                    <!-- Revenue -->
                     <td :class="showCalc ? 'gcalc' : 'hidden'" x-text="fmtN(rowRevenue(row,mi))"></td>
-                    <!-- BOM Cost -->
                     <td :class="showCalc ? 'gcalc' : 'hidden'" x-text="fmtN(rowBomCost(row,mi))"></td>
-                    <!-- GP -->
                     <td :class="showCalc ? 'gcalc' : 'hidden'"
                         :style="rowGP(row,mi) >= 0 ? 'color:#16a34a' : 'color:#dc2626'"
                         x-text="fmtN(rowGP(row,mi))"></td>
                   </template>
-                  <!-- Actions -->
                   <td class="text-center">
-                    <button @click="duplicateRow(row)" title="複製行" class="text-blue-500 hover:text-blue-700 mr-1 text-base">⧉</button>
-                    <button @click="deleteRow(row.id)" title="刪除行" class="text-red-400 hover:text-red-600 text-base">✕</button>
+                    <button @click="duplicateRow(row)" title="複製" class="text-blue-500 hover:text-blue-700 mr-1">⧉</button>
+                    <button @click="deleteRow(row.id)" title="刪除" class="text-red-400 hover:text-red-600">✕</button>
                   </td>
                 </tr>
               </template>
@@ -249,18 +231,16 @@
                 </tr>
               </template>
             </tbody>
-            <!-- Totals row -->
             <template x-if="displayRows.length>0 && showCalc">
               <tfoot>
                 <tr>
-                  <td class="sc0 text-right pr-2" style="left:0" colspan="4">合計 Total</td>
-                  <td class="sc3" style="left:420px"></td>
+                  <td class="sc0 text-right pr-2 font-bold" style="left:0" colspan="4">合計 Total</td>
                   <template x-for="(m,mi) in currentMonths" :key="'tf'+mi">
                     <td class="text-right pr-2" x-text="fmtN(colSum('vol',mi))"></td>
                     <td class="text-right pr-2" x-text="fmtN(colSum('rev',mi))"></td>
                     <td class="text-right pr-2" x-text="fmtN(colSum('bom',mi))"></td>
                     <td class="text-right pr-2"
-                        :style="colSum('gp',mi) >= 0 ? 'color:#16a34a' : 'color:#dc2626'"
+                        :style="colSum('gp',mi)>=0?'color:#16a34a':'color:#dc2626'"
                         x-text="fmtN(colSum('gp',mi))"></td>
                   </template>
                   <td></td>
@@ -277,18 +257,17 @@
     </div>
   </template>
 
-  <!-- No version selected state -->
   <template x-if="!currentVersionId">
     <div class="bg-white rounded-xl border shadow-sm p-16 text-center text-gray-400">
       <div class="text-4xl mb-4">📋</div>
-      <div class="text-base font-medium mb-2">請選擇或新建 FCST 版本以開始輸入資料</div>
+      <div class="text-base font-medium mb-1">請選擇或新建 FCST 版本以開始輸入資料</div>
       <div class="text-xs">Select or create a FCST version to start entering data.</div>
     </div>
   </template>
-</div><!-- /fcst tab -->
+</div>
 
 
-<!-- ===================== TAB: VERSION MANAGEMENT ===================== -->
+<!-- ==================== TAB: VERSIONS ==================== -->
 <div x-show="activeTab==='versions'">
   <div class="bg-white rounded-xl border shadow-sm">
     <div class="px-4 py-3 border-b flex justify-between items-center">
@@ -297,28 +276,20 @@
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b bg-gray-50 text-xs text-gray-500">
-            <th class="text-left p-3 font-semibold">版本標籤 Label</th>
-            <th class="text-left p-3 font-semibold">Data Type</th>
-            <th class="text-left p-3 font-semibold">起始月份</th>
-            <th class="text-left p-3 font-semibold">月份數</th>
-            <th class="text-left p-3 font-semibold">備註</th>
-            <th class="text-center p-3 font-semibold">筆數</th>
-            <th class="text-left p-3 font-semibold">建立時間</th>
-            <th class="text-center p-3">操作</th>
-          </tr>
-        </thead>
+        <thead><tr class="border-b bg-gray-50 text-xs text-gray-500">
+          <th class="text-left p-3">版本標籤</th><th class="text-left p-3">Data Type</th>
+          <th class="text-left p-3">起始月份</th><th class="text-center p-3">月份數</th>
+          <th class="text-left p-3">備註</th><th class="text-center p-3">筆數</th>
+          <th class="text-left p-3">建立時間</th><th class="text-center p-3">操作</th>
+        </tr></thead>
         <tbody>
           <template x-for="v in versions" :key="v.id">
             <tr class="border-b hover:bg-gray-50">
               <td class="p-3 font-medium text-blue-700" x-text="v.label"></td>
-              <td class="p-3">
-                <span class="badge" :class="dtBadge(v.dataType)" x-text="v.dataType"></span>
-              </td>
+              <td class="p-3"><span class="badge" :class="dtBadge(v.dataType)" x-text="v.dataType"></span></td>
               <td class="p-3" x-text="v.startMonth"></td>
               <td class="p-3 text-center" x-text="v.numMonths"></td>
-              <td class="p-3 text-gray-500 text-xs" x-text="v.note||'—'"></td>
+              <td class="p-3 text-gray-400 text-xs" x-text="v.note||'—'"></td>
               <td class="p-3 text-center font-semibold text-blue-600" x-text="getRowCount(v.id)"></td>
               <td class="p-3 text-gray-400 text-xs" x-text="v.createdAt"></td>
               <td class="p-3 text-center">
@@ -330,19 +301,18 @@
             </tr>
           </template>
           <template x-if="versions.length===0">
-            <tr><td colspan="8" class="py-10 text-center text-gray-400">尚無版本。請新建版本。</td></tr>
+            <tr><td colspan="8" class="py-10 text-center text-gray-400">尚無版本</td></tr>
           </template>
         </tbody>
       </table>
     </div>
   </div>
-</div><!-- /versions tab -->
+</div>
 
 
-<!-- ===================== TAB: MASTER DATA ===================== -->
+<!-- ==================== TAB: MASTER DATA ==================== -->
 <div x-show="activeTab==='master'">
   <div class="bg-white rounded-xl border shadow-sm">
-    <!-- Sub-tabs -->
     <div class="flex border-b overflow-x-auto">
       <template x-for="mt in masterTabs" :key="mt.key">
         <button @click="masterTab=mt.key"
@@ -351,123 +321,104 @@
         </button>
       </template>
     </div>
-
     <div class="p-4">
 
-      <!-- BU -->
-      <div x-show="masterTab==='bu'">
-        <div class="text-xs text-gray-500 mb-2">Business Unit 清單，用於分類 Acc Mgr / Customer / Product Line</div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm border-collapse">
-            <thead><tr class="bg-gray-50 text-xs text-gray-500 border-b">
-              <th class="text-left p-2">BU Name</th><th class="p-2 w-16">操作</th>
-            </tr></thead>
-            <tbody>
+      <!-- ORG: BU / AccMgr / Customer / Product Line in 4 panels -->
+      <div x-show="masterTab==='org'">
+        <div class="grid grid-cols-4 gap-4">
+
+          <!-- BU -->
+          <div class="panel">
+            <div class="panel-title">BU</div>
+            <div class="overflow-y-auto max-h-64 mb-3">
               <template x-for="b in bus" :key="b.id">
-                <tr class="border-b hover:bg-gray-50">
-                  <td class="p-2 font-medium" x-text="b.name"></td>
-                  <td class="p-2 text-center"><button @click="deleteItem('bus',b.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button></td>
-                </tr>
+                <div class="flex justify-between items-center py-1.5 border-b text-xs">
+                  <span class="font-medium" x-text="b.name"></span>
+                  <button @click="deleteItem('bus',b.id)" class="text-red-400 hover:text-red-600 ml-2">✕</button>
+                </div>
               </template>
-              <template x-if="bus.length===0"><tr><td colspan="2" class="py-4 text-center text-gray-400 text-xs">尚無資料</td></tr></template>
-            </tbody>
-          </table>
-        </div>
-        <div class="mt-3 flex gap-2">
-          <input type="text" x-model="forms.bu.name" @keydown.enter="addBU()" placeholder="BU Name" class="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-400">
-          <button @click="addBU()" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700">新增 Add</button>
-        </div>
-      </div>
+              <template x-if="bus.length===0"><div class="py-4 text-center text-gray-400 text-xs">尚無資料</div></template>
+            </div>
+            <div class="flex gap-1.5">
+              <input type="text" x-model="forms.bu.name" @keydown.enter="addBU()" placeholder="BU Name" class="border rounded px-2 py-1 text-xs flex-1 focus:ring-1 focus:ring-blue-400">
+              <button @click="addBU()" class="px-2 py-1 bg-blue-600 text-white text-xs rounded font-bold">＋</button>
+            </div>
+          </div>
 
-      <!-- ACC MGR -->
-      <div x-show="masterTab==='accmgr'">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm border-collapse">
-            <thead><tr class="bg-gray-50 text-xs text-gray-500 border-b">
-              <th class="text-left p-2">Acc Mgr Name</th><th class="text-left p-2">BU</th><th class="p-2">操作</th>
-            </tr></thead>
-            <tbody>
+          <!-- Acc Mgr -->
+          <div class="panel">
+            <div class="panel-title">Acc Mgr</div>
+            <div class="overflow-y-auto max-h-64 mb-3">
               <template x-for="a in accMgrs" :key="a.id">
-                <tr class="border-b hover:bg-gray-50">
-                  <td class="p-2" x-text="a.name"></td>
-                  <td class="p-2" x-text="nameOf('bus',a.buId)"></td>
-                  <td class="p-2 text-center"><button @click="deleteItem('accMgrs',a.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button></td>
-                </tr>
+                <div class="flex justify-between items-center py-1.5 border-b text-xs">
+                  <div>
+                    <span class="font-medium" x-text="a.name"></span>
+                    <span class="ml-1 text-[10px] text-gray-400 bg-gray-100 px-1 rounded" x-text="nameOf('bus',a.buId)||'—'"></span>
+                  </div>
+                  <button @click="deleteItem('accMgrs',a.id)" class="text-red-400 hover:text-red-600 ml-2">✕</button>
+                </div>
               </template>
-              <template x-if="accMgrs.length===0"><tr><td colspan="3" class="py-4 text-center text-gray-400 text-xs">尚無資料</td></tr></template>
-            </tbody>
-          </table>
-        </div>
-        <div class="mt-3 flex gap-2 flex-wrap">
-          <input type="text" x-model="forms.accMgr.name" placeholder="Acc Mgr Name" class="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-400">
-          <select x-model="forms.accMgr.buId" class="border rounded-lg px-3 py-1.5 text-sm">
-            <option value="">— BU —</option>
-            <template x-for="b in bus" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
-          </select>
-          <button @click="addAccMgr()" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700">新增 Add</button>
-        </div>
-      </div>
+              <template x-if="accMgrs.length===0"><div class="py-4 text-center text-gray-400 text-xs">尚無資料</div></template>
+            </div>
+            <div class="space-y-1.5">
+              <input type="text" x-model="forms.accMgr.name" @keydown.enter="addAccMgr()" placeholder="Acc Mgr Name" class="border rounded px-2 py-1 text-xs w-full focus:ring-1 focus:ring-blue-400">
+              <select x-model="forms.accMgr.buId" class="border rounded px-2 py-1 text-xs w-full">
+                <option value="">— BU —</option>
+                <template x-for="b in bus" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
+              </select>
+              <button @click="addAccMgr()" class="px-3 py-1 bg-blue-600 text-white text-xs rounded w-full">新增 Add</button>
+            </div>
+          </div>
 
-      <!-- CUSTOMER -->
-      <div x-show="masterTab==='customer'">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm border-collapse">
-            <thead><tr class="bg-gray-50 text-xs text-gray-500 border-b">
-              <th class="text-left p-2">Customer Name</th><th class="text-left p-2">BU</th><th class="text-left p-2">Acc Mgr</th><th class="p-2">操作</th>
-            </tr></thead>
-            <tbody>
+          <!-- Customer -->
+          <div class="panel">
+            <div class="panel-title">Customer</div>
+            <div class="overflow-y-auto max-h-64 mb-3">
               <template x-for="c in customers" :key="c.id">
-                <tr class="border-b hover:bg-gray-50">
-                  <td class="p-2 font-medium" x-text="c.name"></td>
-                  <td class="p-2 text-xs" x-text="nameOf('bus',c.buId)"></td>
-                  <td class="p-2 text-xs" x-text="nameOf('accMgrs',c.accMgrId)"></td>
-                  <td class="p-2 text-center"><button @click="deleteItem('customers',c.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button></td>
-                </tr>
+                <div class="flex justify-between items-start py-1.5 border-b text-xs">
+                  <div>
+                    <span class="font-medium" x-text="c.name"></span>
+                    <div class="text-[10px] text-gray-400 mt-0.5" x-text="(nameOf('bus',c.buId)||'') + (c.accMgrId ? ' / '+nameOf('accMgrs',c.accMgrId) : '')"></div>
+                  </div>
+                  <button @click="deleteItem('customers',c.id)" class="text-red-400 hover:text-red-600 ml-2 mt-0.5">✕</button>
+                </div>
               </template>
-              <template x-if="customers.length===0"><tr><td colspan="4" class="py-4 text-center text-gray-400 text-xs">尚無資料</td></tr></template>
-            </tbody>
-          </table>
-        </div>
-        <div class="mt-3 flex gap-2 flex-wrap">
-          <input type="text" x-model="forms.customer.name" placeholder="Customer Name" class="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-400">
-          <select x-model="forms.customer.buId" @change="forms.customer.accMgrId=''" class="border rounded-lg px-3 py-1.5 text-sm">
-            <option value="">— BU —</option>
-            <template x-for="b in bus" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
-          </select>
-          <select x-model="forms.customer.accMgrId" class="border rounded-lg px-3 py-1.5 text-sm">
-            <option value="">— Acc Mgr —</option>
-            <template x-for="a in accMgrs.filter(x=>!forms.customer.buId||x.buId===forms.customer.buId)" :key="a.id"><option :value="a.id" x-text="a.name"></option></template>
-          </select>
-          <button @click="addCustomer()" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700">新增 Add</button>
-        </div>
-      </div>
+              <template x-if="customers.length===0"><div class="py-4 text-center text-gray-400 text-xs">尚無資料</div></template>
+            </div>
+            <div class="space-y-1.5">
+              <input type="text" x-model="forms.customer.name" @keydown.enter="addCustomer()" placeholder="Customer Name" class="border rounded px-2 py-1 text-xs w-full focus:ring-1 focus:ring-blue-400">
+              <select x-model="forms.customer.buId" @change="forms.customer.accMgrId=''" class="border rounded px-2 py-1 text-xs w-full">
+                <option value="">— BU —</option>
+                <template x-for="b in bus" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
+              </select>
+              <select x-model="forms.customer.accMgrId" class="border rounded px-2 py-1 text-xs w-full">
+                <option value="">— Acc Mgr —</option>
+                <template x-for="a in (forms.customer.buId ? accMgrs.filter(x=>x.buId===forms.customer.buId) : accMgrs)" :key="a.id">
+                  <option :value="a.id" x-text="a.name"></option>
+                </template>
+              </select>
+              <button @click="addCustomer()" class="px-3 py-1 bg-blue-600 text-white text-xs rounded w-full">新增 Add</button>
+            </div>
+          </div>
 
-      <!-- PRODUCT LINE -->
-      <div x-show="masterTab==='pl'">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm border-collapse">
-            <thead><tr class="bg-gray-50 text-xs text-gray-500 border-b">
-              <th class="text-left p-2">Product Line</th><th class="text-left p-2">BU</th><th class="p-2">操作</th>
-            </tr></thead>
-            <tbody>
+          <!-- Product Line (no BU binding) -->
+          <div class="panel">
+            <div class="panel-title">Product Line</div>
+            <div class="overflow-y-auto max-h-64 mb-3">
               <template x-for="p in productLines" :key="p.id">
-                <tr class="border-b hover:bg-gray-50">
-                  <td class="p-2" x-text="p.name"></td>
-                  <td class="p-2 text-xs" x-text="nameOf('bus',p.buId)"></td>
-                  <td class="p-2 text-center"><button @click="deleteItem('productLines',p.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button></td>
-                </tr>
+                <div class="flex justify-between items-center py-1.5 border-b text-xs">
+                  <span class="font-medium" x-text="p.name"></span>
+                  <button @click="deleteItem('productLines',p.id)" class="text-red-400 hover:text-red-600 ml-2">✕</button>
+                </div>
               </template>
-              <template x-if="productLines.length===0"><tr><td colspan="3" class="py-4 text-center text-gray-400 text-xs">尚無資料</td></tr></template>
-            </tbody>
-          </table>
-        </div>
-        <div class="mt-3 flex gap-2">
-          <input type="text" x-model="forms.pl.name" placeholder="Product Line Name" class="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-400">
-          <select x-model="forms.pl.buId" class="border rounded-lg px-3 py-1.5 text-sm">
-            <option value="">— BU —</option>
-            <template x-for="b in bus" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
-          </select>
-          <button @click="addPL()" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700">新增 Add</button>
+              <template x-if="productLines.length===0"><div class="py-4 text-center text-gray-400 text-xs">尚無資料</div></template>
+            </div>
+            <div class="flex gap-1.5">
+              <input type="text" x-model="forms.pl.name" @keydown.enter="addPL()" placeholder="Product Line Name" class="border rounded px-2 py-1 text-xs flex-1 focus:ring-1 focus:ring-blue-400">
+              <button @click="addPL()" class="px-2 py-1 bg-blue-600 text-white text-xs rounded font-bold">＋</button>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -475,38 +426,34 @@
       <div x-show="masterTab==='sites'">
         <div class="grid grid-cols-2 gap-6">
           <div>
-            <h3 class="font-semibold text-xs text-gray-600 mb-2 uppercase tracking-wide">RD Site</h3>
-            <div class="border rounded-lg overflow-hidden">
-              <table class="w-full text-sm"><tbody>
-                <template x-for="s in rdSites" :key="s.id">
-                  <tr class="border-b hover:bg-gray-50 flex justify-between items-center px-3 py-1.5">
-                    <td x-text="s.name"></td>
-                    <td><button @click="deleteItem('rdSites',s.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button></td>
-                  </tr>
-                </template>
-                <template x-if="rdSites.length===0"><tr class="flex"><td class="py-3 text-center text-gray-400 text-xs w-full">尚無資料</td></tr></template>
-              </tbody></table>
+            <div class="panel-title mb-2">RD Site</div>
+            <div class="border rounded-lg overflow-hidden mb-2">
+              <template x-for="s in rdSites" :key="s.id">
+                <div class="flex justify-between items-center px-3 py-1.5 border-b hover:bg-gray-50 text-sm">
+                  <span x-text="s.name"></span>
+                  <button @click="deleteItem('rdSites',s.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button>
+                </div>
+              </template>
+              <template x-if="rdSites.length===0"><div class="py-4 text-center text-gray-400 text-xs">尚無資料</div></template>
             </div>
-            <div class="mt-2 flex gap-2">
-              <input type="text" x-model="forms.rdSite.name" placeholder="RD Site" class="border rounded-lg px-3 py-1.5 text-sm flex-1">
+            <div class="flex gap-2">
+              <input type="text" x-model="forms.rdSite.name" @keydown.enter="addSite('rd')" placeholder="RD Site" class="border rounded-lg px-3 py-1.5 text-sm flex-1">
               <button @click="addSite('rd')" class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg">新增</button>
             </div>
           </div>
           <div>
-            <h3 class="font-semibold text-xs text-gray-600 mb-2 uppercase tracking-wide">MFG Site</h3>
-            <div class="border rounded-lg overflow-hidden">
-              <table class="w-full text-sm"><tbody>
-                <template x-for="s in mfgSites" :key="s.id">
-                  <tr class="border-b hover:bg-gray-50 flex justify-between items-center px-3 py-1.5">
-                    <td x-text="s.name"></td>
-                    <td><button @click="deleteItem('mfgSites',s.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button></td>
-                  </tr>
-                </template>
-                <template x-if="mfgSites.length===0"><tr class="flex"><td class="py-3 text-center text-gray-400 text-xs w-full">尚無資料</td></tr></template>
-              </tbody></table>
+            <div class="panel-title mb-2">MFG Site</div>
+            <div class="border rounded-lg overflow-hidden mb-2">
+              <template x-for="s in mfgSites" :key="s.id">
+                <div class="flex justify-between items-center px-3 py-1.5 border-b hover:bg-gray-50 text-sm">
+                  <span x-text="s.name"></span>
+                  <button @click="deleteItem('mfgSites',s.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button>
+                </div>
+              </template>
+              <template x-if="mfgSites.length===0"><div class="py-4 text-center text-gray-400 text-xs">尚無資料</div></template>
             </div>
-            <div class="mt-2 flex gap-2">
-              <input type="text" x-model="forms.mfgSite.name" placeholder="MFG Site" class="border rounded-lg px-3 py-1.5 text-sm flex-1">
+            <div class="flex gap-2">
+              <input type="text" x-model="forms.mfgSite.name" @keydown.enter="addSite('mfg')" placeholder="MFG Site" class="border rounded-lg px-3 py-1.5 text-sm flex-1">
               <button @click="addSite('mfg')" class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg">新增</button>
             </div>
           </div>
@@ -515,63 +462,112 @@
 
       <!-- MODEL -->
       <div x-show="masterTab==='model'">
-        <div class="overflow-x-auto">
+        <!-- Header filter -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3 flex flex-wrap gap-3 items-end">
+          <span class="text-xs font-semibold text-blue-700">篩選顯示 Filter:</span>
+          <div>
+            <label class="block text-xs text-gray-500 mb-0.5">BU</label>
+            <select x-model="modelFilter.buId" @change="modelFilter.accMgrId=''; modelFilter.customerId=''" class="border rounded px-2 py-1 text-xs">
+              <option value="">All BU</option>
+              <template x-for="b in bus" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-0.5">Acc Mgr</label>
+            <select x-model="modelFilter.accMgrId" @change="modelFilter.customerId=''" class="border rounded px-2 py-1 text-xs">
+              <option value="">All Acc Mgr</option>
+              <template x-for="a in (modelFilter.buId ? accMgrs.filter(x=>x.buId===modelFilter.buId) : accMgrs)" :key="a.id">
+                <option :value="a.id" x-text="a.name"></option>
+              </template>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-0.5">Customer</label>
+            <select x-model="modelFilter.customerId" class="border rounded px-2 py-1 text-xs">
+              <option value="">All Customer</option>
+              <template x-for="c in modelFilterCustomers" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
+            </select>
+          </div>
+          <button @click="modelFilter={buId:'',accMgrId:'',customerId:''}" class="text-xs text-gray-400 hover:text-gray-600 mt-4">✕ 清除</button>
+          <span class="text-xs text-blue-500 mt-4" x-show="modelFilter.customerId">（顯示有 Pricing 記錄的 Model）</span>
+        </div>
+
+        <!-- Model list -->
+        <div class="overflow-x-auto mb-4">
           <table class="w-full text-sm border-collapse">
             <thead><tr class="bg-gray-50 text-xs text-gray-500 border-b">
               <th class="text-left p-2">Model Name</th>
               <th class="text-left p-2">Product Line</th>
-              <th class="text-left p-2">BU</th>
+              <th class="text-left p-2">Category2 / Project</th>
               <th class="text-left p-2">RD Site</th>
               <th class="text-left p-2">MFG Site</th>
-              <th class="p-2">操作</th>
+              <th class="p-2 w-12">操作</th>
             </tr></thead>
             <tbody>
-              <template x-for="m in models" :key="m.id">
+              <template x-for="m in filteredModels" :key="m.id">
                 <tr class="border-b hover:bg-gray-50">
                   <td class="p-2 font-medium" x-text="m.name"></td>
-                  <td class="p-2 text-xs" x-text="nameOf('productLines',m.plId)"></td>
-                  <td class="p-2 text-xs" x-text="nameOf('bus',plBU(m.plId))"></td>
-                  <td class="p-2 text-xs" x-text="nameOf('rdSites',m.rdSiteId)"></td>
-                  <td class="p-2 text-xs" x-text="nameOf('mfgSites',m.mfgSiteId)"></td>
+                  <td class="p-2 text-xs" x-text="nameOf('productLines',m.plId)||'—'"></td>
+                  <td class="p-2 text-xs text-blue-600" x-text="m.category2||'—'"></td>
+                  <td class="p-2 text-xs" x-text="nameOf('rdSites',m.rdSiteId)||'—'"></td>
+                  <td class="p-2 text-xs" x-text="nameOf('mfgSites',m.mfgSiteId)||'—'"></td>
                   <td class="p-2 text-center"><button @click="deleteItem('models',m.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button></td>
                 </tr>
               </template>
-              <template x-if="models.length===0"><tr><td colspan="6" class="py-4 text-center text-gray-400 text-xs">尚無資料</td></tr></template>
+              <template x-if="filteredModels.length===0"><tr><td colspan="6" class="py-5 text-center text-gray-400 text-xs">尚無資料（或篩選無符合結果）</td></tr></template>
             </tbody>
           </table>
         </div>
-        <div class="mt-3 grid grid-cols-2 gap-3 max-w-xl">
-          <input type="text" x-model="forms.model.name" placeholder="Model Name" class="border rounded-lg px-3 py-1.5 text-sm col-span-2">
-          <select x-model="forms.model.plId" class="border rounded-lg px-3 py-1.5 text-sm">
-            <option value="">— Product Line —</option>
-            <template x-for="p in productLines" :key="p.id"><option :value="p.id" x-text="p.name"></option></template>
-          </select>
-          <div class="flex gap-2">
-            <select x-model="forms.model.rdSiteId" class="border rounded-lg px-3 py-1.5 text-sm flex-1">
-              <option value="">— RD Site —</option>
-              <template x-for="s in rdSites" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
-            </select>
-            <select x-model="forms.model.mfgSiteId" class="border rounded-lg px-3 py-1.5 text-sm flex-1">
-              <option value="">— MFG Site —</option>
-              <template x-for="s in mfgSites" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
-            </select>
+
+        <!-- Add form -->
+        <div class="border rounded-xl p-4 bg-gray-50">
+          <div class="panel-title mb-3">新增 Model</div>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="col-span-2">
+              <label class="block text-xs text-gray-500 mb-1">Model Name *</label>
+              <input type="text" x-model="forms.model.name" placeholder="Model Name" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Product Line</label>
+              <select x-model="forms.model.plId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+                <option value="">— PL —</option>
+                <template x-for="p in productLines" :key="p.id"><option :value="p.id" x-text="p.name"></option></template>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Category2 / Project</label>
+              <input type="text" x-model="forms.model.category2" placeholder="Project name" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">RD Site</label>
+              <select x-model="forms.model.rdSiteId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+                <option value="">— RD Site —</option>
+                <template x-for="s in rdSites" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">MFG Site</label>
+              <select x-model="forms.model.mfgSiteId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+                <option value="">— MFG Site —</option>
+                <template x-for="s in mfgSites" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
+              </select>
+            </div>
           </div>
-          <button @click="addModel()" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg col-span-2 hover:bg-blue-700">新增 Model</button>
+          <button @click="addModel()" class="mt-3 px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700">新增 Model</button>
         </div>
       </div>
 
-      <!-- PRICING (Model Pricing) -->
+      <!-- MODEL PRICING (no Category2) -->
       <div x-show="masterTab==='pricing'">
         <div class="mb-2 text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2">
-          💡 設定 Model × Customer 的 ASP / BOM 單價，可設定多筆生效日期。FCST輸入時會自動帶入最近有效單價。
+          💡 設定 Model × Customer 的 ASP / BOM 單價與生效日期。FCST輸入時自動帶入最近有效單價。Category2 請在 Model 設定中管理。
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto mb-4">
           <table class="w-full text-sm border-collapse">
             <thead><tr class="bg-gray-50 text-xs text-gray-500 border-b">
               <th class="text-left p-2">Model</th>
               <th class="text-left p-2">Customer</th>
               <th class="text-left p-2">Category1</th>
-              <th class="text-left p-2">Category2 / Project</th>
               <th class="text-right p-2">ASP</th>
               <th class="text-right p-2">BOM</th>
               <th class="text-right p-2">MFC</th>
@@ -579,7 +575,7 @@
               <th class="text-right p-2">RMA%</th>
               <th class="text-right p-2">Royalty</th>
               <th class="text-right p-2">Logistics</th>
-              <th class="text-left p-2">生效日 Eff. Date</th>
+              <th class="text-left p-2">生效日</th>
               <th class="p-2">操作</th>
             </tr></thead>
             <tbody>
@@ -588,25 +584,23 @@
                   <td class="p-2 font-medium" x-text="nameOf('models',p.modelId)"></td>
                   <td class="p-2" x-text="nameOf('customers',p.customerId)||'(All)'"></td>
                   <td class="p-2"><span class="badge" :class="cat1Badge(p.category1)" x-text="p.category1||'—'"></span></td>
-                  <td class="p-2" x-text="p.category2||'—'"></td>
                   <td class="p-2 text-right" x-text="fmtN(p.asp)"></td>
                   <td class="p-2 text-right" x-text="fmtN(p.bom)"></td>
-                  <td class="p-2 text-right" x-text="fmtN(p.mfc)"></td>
-                  <td class="p-2 text-right" x-text="fmtN(p.sga)"></td>
+                  <td class="p-2 text-right" x-text="p.mfc ? fmtN(p.mfc) : '—'"></td>
+                  <td class="p-2 text-right" x-text="p.sga ? fmtN(p.sga) : '—'"></td>
                   <td class="p-2 text-right" x-text="p.rma ? p.rma+'%' : '—'"></td>
-                  <td class="p-2 text-right" x-text="fmtN(p.royalty)"></td>
-                  <td class="p-2 text-right" x-text="fmtN(p.logistics)"></td>
+                  <td class="p-2 text-right" x-text="p.royalty ? fmtN(p.royalty) : '—'"></td>
+                  <td class="p-2 text-right" x-text="p.logistics ? fmtN(p.logistics) : '—'"></td>
                   <td class="p-2" x-text="p.effectiveDate"></td>
                   <td class="p-2 text-center"><button @click="deleteItem('pricing',p.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button></td>
                 </tr>
               </template>
-              <template x-if="pricing.length===0"><tr><td colspan="13" class="py-4 text-center text-gray-400 text-xs">尚無定價資料</td></tr></template>
+              <template x-if="pricing.length===0"><tr><td colspan="12" class="py-5 text-center text-gray-400 text-xs">尚無定價資料</td></tr></template>
             </tbody>
           </table>
         </div>
-        <!-- Pricing Add Form -->
-        <div class="mt-4 border rounded-xl p-4 bg-gray-50">
-          <h4 class="text-xs font-semibold text-gray-600 mb-3 uppercase">新增定價 Add Pricing Record</h4>
+        <div class="border rounded-xl p-4 bg-gray-50">
+          <div class="panel-title mb-3">新增定價記錄 Add Pricing Record</div>
           <div class="grid grid-cols-3 gap-3">
             <div>
               <label class="block text-xs text-gray-500 mb-1">Model *</label>
@@ -616,7 +610,7 @@
               </select>
             </div>
             <div>
-              <label class="block text-xs text-gray-500 mb-1">Customer (留空=全部)</label>
+              <label class="block text-xs text-gray-500 mb-1">Customer (空=全部)</label>
               <select x-model="forms.pricing.customerId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
                 <option value="">(All Customers)</option>
                 <template x-for="c in customers" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
@@ -634,11 +628,7 @@
               </select>
             </div>
             <div>
-              <label class="block text-xs text-gray-500 mb-1">Category2 / Project</label>
-              <input type="text" x-model="forms.pricing.category2" placeholder="Project name" class="border rounded-lg px-3 py-1.5 text-sm w-full">
-            </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">ASP (Unit Price)</label>
+              <label class="block text-xs text-gray-500 mb-1">ASP</label>
               <input type="number" x-model.number="forms.pricing.asp" step="0.01" class="border rounded-lg px-3 py-1.5 text-sm w-full text-right">
             </div>
             <div>
@@ -666,50 +656,47 @@
               <input type="number" x-model.number="forms.pricing.logistics" step="0.01" class="border rounded-lg px-3 py-1.5 text-sm w-full text-right">
             </div>
           </div>
-          <button @click="addPricing()" class="mt-3 px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700">新增定價記錄 Add Record</button>
+          <button @click="addPricing()" class="mt-3 px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700">新增定價記錄</button>
         </div>
       </div>
 
       <!-- CATEGORY1 OPTIONS -->
       <div x-show="masterTab==='cat1'">
-        <div class="max-w-md">
-          <div class="text-xs text-gray-500 mb-3">管理 Category1 的選項清單（如 Revenue、NRE、Expense、Others）</div>
+        <div class="max-w-sm">
+          <div class="text-xs text-gray-500 mb-3">管理 Category1 選項清單（會計入營收分類）</div>
           <div class="border rounded-lg overflow-hidden mb-3">
-            <template x-for="(c, ci) in cat1List" :key="ci">
-              <div class="flex items-center justify-between px-3 py-2 border-b hover:bg-gray-50">
-                <span x-text="c" class="text-sm font-medium"></span>
+            <template x-for="(c,ci) in cat1List" :key="ci">
+              <div class="flex items-center gap-3 px-3 py-2 border-b hover:bg-gray-50">
+                <span class="badge" :class="cat1Badge(c)" x-text="c"></span>
+                <span class="flex-1 text-sm font-medium" x-text="c"></span>
                 <button @click="cat1List.splice(ci,1); saveAll()" class="text-red-400 hover:text-red-600 text-xs">刪除</button>
               </div>
             </template>
-            <template x-if="cat1List.length===0">
-              <div class="py-4 text-center text-gray-400 text-xs">尚無選項</div>
-            </template>
+            <template x-if="cat1List.length===0"><div class="py-4 text-center text-gray-400 text-xs">尚無選項</div></template>
           </div>
           <div class="flex gap-2">
-            <input type="text" x-model="forms.cat1.name" @keydown.enter="addCat1()" placeholder="新增選項 (如 NRE)" class="border rounded-lg px-3 py-1.5 text-sm flex-1">
+            <input type="text" x-model="forms.cat1.name" @keydown.enter="addCat1()" placeholder="如 NRE" class="border rounded-lg px-3 py-1.5 text-sm flex-1">
             <button @click="addCat1()" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg">新增</button>
           </div>
         </div>
       </div>
 
-    </div><!-- /p-4 -->
+    </div>
   </div>
-</div><!-- /master tab -->
+</div>
 
-</div><!-- /max-w -->
+</div><!-- /container -->
 
 
-<!-- ===================== MODALS ===================== -->
+<!-- ==================== MODALS ==================== -->
 
-<!-- New/Edit Version Modal -->
+<!-- Version Modal -->
 <div x-show="showVersionModal" class="modal-bg" @click.self="showVersionModal=false">
   <div class="modal-box">
-    <h3 class="font-bold text-base mb-4" x-text="editingVersion ? '編輯版本 Edit Version' : '新建 FCST 版本 New Version'"></h3>
+    <h3 class="font-bold text-base mb-4" x-text="editingVersion ? '編輯版本' : '新建 FCST 版本'"></h3>
     <div class="space-y-3">
       <div>
-        <label class="block text-xs text-gray-500 mb-1">版本標籤 Label *
-          <span class="text-gray-400 ml-1">(如: 202606 3M FCST、202605 BP、Actual)</span>
-        </label>
+        <label class="block text-xs text-gray-500 mb-1">版本標籤 Label *　<span class="text-gray-400 font-normal">(如: 202606 3M FCST、202605 BP、Actual)</span></label>
         <input type="text" x-model="vForm.label" placeholder="202606 3M FCST" class="border rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400">
       </div>
       <div class="grid grid-cols-2 gap-3">
@@ -722,14 +709,14 @@
           </select>
         </div>
         <div>
-          <label class="block text-xs text-gray-500 mb-1">起始月份 Start Month *</label>
+          <label class="block text-xs text-gray-500 mb-1">起始月份 *</label>
           <input type="month" x-model="vForm.startMonth" class="border rounded-lg px-3 py-2 text-sm w-full">
         </div>
       </div>
       <div>
-        <label class="block text-xs text-gray-500 mb-1">月份數 Num Months</label>
+        <label class="block text-xs text-gray-500 mb-1">月份數</label>
         <div class="flex gap-2 items-center">
-          <input type="number" x-model.number="vForm.numMonths" min="1" max="24" class="border rounded-lg px-3 py-2 text-sm w-24">
+          <input type="number" x-model.number="vForm.numMonths" min="1" max="24" class="border rounded-lg px-3 py-2 text-sm w-20">
           <div class="flex gap-1">
             <button @click="vForm.numMonths=1" :class="vForm.numMonths===1?'bg-blue-600 text-white':'bg-gray-100'" class="px-2 py-1 text-xs rounded">1M</button>
             <button @click="vForm.numMonths=3" :class="vForm.numMonths===3?'bg-blue-600 text-white':'bg-gray-100'" class="px-2 py-1 text-xs rounded">3M</button>
@@ -742,15 +729,13 @@
         </div>
       </div>
       <div>
-        <label class="block text-xs text-gray-500 mb-1">備註 Note</label>
+        <label class="block text-xs text-gray-500 mb-1">備註</label>
         <input type="text" x-model="vForm.note" placeholder="備註說明..." class="border rounded-lg px-3 py-2 text-sm w-full">
       </div>
     </div>
     <div class="mt-5 flex justify-end gap-2">
       <button @click="showVersionModal=false" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">取消</button>
-      <button @click="saveVersion()" class="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
-        <span x-text="editingVersion ? '更新 Update' : '建立 Create'"></span>
-      </button>
+      <button @click="saveVersion()" class="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium" x-text="editingVersion ? '更新' : '建立 Create'"></button>
     </div>
   </div>
 </div>
@@ -758,7 +743,7 @@
 <!-- Load Customer Models Modal -->
 <div x-show="showLoadModal" class="modal-bg" @click.self="showLoadModal=false">
   <div class="modal-box">
-    <h3 class="font-bold text-base mb-4">載入 Customer 所有模型 Load Customer Models</h3>
+    <h3 class="font-bold text-base mb-4">載入 Customer 模型 Load Customer Models</h3>
     <div class="mb-3">
       <label class="block text-xs text-gray-500 mb-1">選擇 Customer</label>
       <select x-model="loadForm.customerId" class="border rounded-lg px-3 py-2 text-sm w-full">
@@ -768,26 +753,28 @@
     </div>
     <template x-if="loadForm.customerId">
       <div class="border rounded-lg overflow-hidden mb-3">
-        <div class="bg-gray-50 px-3 py-1.5 text-xs text-gray-500 font-semibold border-b">
-          符合的 Pricing 記錄（可選擇要載入哪些）:
+        <div class="bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-500 border-b flex justify-between">
+          <span>符合的 Pricing 記錄</span>
+          <button @click="selectAllPricing()" class="text-blue-500 hover:underline">全選</button>
         </div>
         <template x-for="p in pricingForCustomer(loadForm.customerId)" :key="p.id">
           <label class="flex items-center gap-3 px-3 py-2 hover:bg-blue-50 cursor-pointer border-b">
             <input type="checkbox" :value="p.id" x-model="loadForm.selectedPricing" class="rounded">
             <div class="flex-1 text-xs">
-              <span class="font-medium" x-text="nameOf('models',p.modelId)"></span>
-              <span class="text-gray-400 ml-2" x-text="'Cat1: '+(p.category1||'—')+' | Cat2: '+(p.category2||'—')+' | ASP: '+fmtN(p.asp)"></span>
+              <span class="font-medium text-gray-800" x-text="nameOf('models',p.modelId)"></span>
+              <span class="text-blue-600 ml-2" x-text="'Cat2: '+(modelCat2(p.modelId)||'—')"></span>
+              <span class="text-gray-400 ml-2" x-text="'Cat1: '+(p.category1||'—')+' | ASP: '+fmtN(p.asp)+' | BOM: '+fmtN(p.bom)"></span>
             </div>
           </label>
         </template>
         <template x-if="pricingForCustomer(loadForm.customerId).length===0">
-          <div class="py-4 text-center text-gray-400 text-xs">此 Customer 尚無 Pricing 記錄，請先在基礎資料設定。</div>
+          <div class="py-4 text-center text-gray-400 text-xs">此 Customer 尚無 Pricing 記錄，請先在 Model Pricing 設定。</div>
         </template>
       </div>
     </template>
     <div class="flex justify-end gap-2">
       <button @click="showLoadModal=false" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">取消</button>
-      <button @click="loadCustomerModels()" :disabled="!loadForm.customerId || loadForm.selectedPricing.length===0"
+      <button @click="loadCustomerModels()" :disabled="!loadForm.customerId||loadForm.selectedPricing.length===0"
         class="px-5 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium">
         載入 Load (<span x-text="loadForm.selectedPricing.length"></span>)
       </button>
@@ -796,80 +783,79 @@
 </div>
 
 <!-- Toast -->
-<div x-show="toast.show" x-transition class="fixed bottom-6 right-6 z-50"
+<div x-show="toast.show" x-transition
      :class="toast.type==='error' ? 'bg-red-600' : 'bg-green-600'"
-     class="text-white px-4 py-3 rounded-xl shadow-xl text-sm font-medium">
+     class="fixed bottom-6 right-6 z-50 text-white px-4 py-3 rounded-xl shadow-xl text-sm font-medium">
   <span x-text="toast.msg"></span>
 </div>
 
 
-<!-- ===================== JAVASCRIPT ===================== -->
+<!-- ==================== JAVASCRIPT ==================== -->
 <script>
 function fcstApp() {
   return {
-    // ── UI state ──
+    // UI state
     activeTab: 'fcst',
-    masterTab: 'bu',
+    masterTab: 'org',
     showCalc: false,
     showVersionModal: false,
     showLoadModal: false,
     saveStatus: '',
     toast: { show: false, msg: '', type: 'ok' },
 
-    // ── Master Data ──
+    // Master Data
     bus: [],
     accMgrs: [],
     customers: [],
-    productLines: [],
+    productLines: [],   // { id, name }  — no buId
     rdSites: [],
     mfgSites: [],
-    models: [],
-    pricing: [],
+    models: [],         // { id, name, plId, category2, rdSiteId, mfgSiteId }
+    pricing: [],        // { id, modelId, customerId, asp, bom, mfc, sga, rma, royalty, logistics, category1, effectiveDate }
     cat1List: ['Revenue', 'NRE', 'Expense', 'Others'],
 
-    // ── Versions & FCST rows ──
+    // Versions & FCST
     versions: [],
-    fcstRows: [],   // all rows across all versions
+    fcstRows: [],
 
-    // ── Current session ──
+    // Session state
     currentVersionId: '',
-    ff: { buId: '', accMgrId: '', customerId: '' },
+    sessionBuId: '',
+    sessionAccMgrId: '',
+    ff: { customerId: '' },
 
-    // ── Forms ──
+    // Model tab filter
+    modelFilter: { buId: '', accMgrId: '', customerId: '' },
+
+    // Forms
     forms: {
-      bu: { name: '' },
-      accMgr: { name: '', buId: '' },
+      bu:       { name: '' },
+      accMgr:   { name: '', buId: '' },
       customer: { name: '', buId: '', accMgrId: '' },
-      pl: { name: '', buId: '' },
-      rdSite: { name: '' },
-      mfgSite: { name: '' },
-      model: { name: '', plId: '', rdSiteId: '', mfgSiteId: '' },
-      pricing: { modelId: '', customerId: '', asp: '', bom: '', mfc: '', sga: '', rma: '', royalty: '', logistics: '', category1: '', category2: '', effectiveDate: '' },
-      cat1: { name: '' },
+      pl:       { name: '' },
+      rdSite:   { name: '' },
+      mfgSite:  { name: '' },
+      model:    { name: '', plId: '', category2: '', rdSiteId: '', mfgSiteId: '' },
+      pricing:  { modelId: '', customerId: '', asp: '', bom: '', mfc: '', sga: '', rma: '', royalty: '', logistics: '', category1: '', effectiveDate: '' },
+      cat1:     { name: '' },
     },
 
-    // Version form
     vForm: { label: '', dataType: 'Plan', startMonth: '', numMonths: 3, note: '' },
     editingVersion: null,
-
-    // Load modal
     loadForm: { customerId: '', selectedPricing: [] },
 
-    // ── Static config ──
+    // Config
     mainTabs: [
-      { key: 'fcst', label: '📝 FCST 資料輸入' },
-      { key: 'versions', label: '📁 版本管理 Versions' },
-      { key: 'master', label: '⚙️ 基礎資料 Master Data' },
+      { key: 'fcst',     label: '📝 FCST 資料輸入' },
+      { key: 'versions', label: '📁 版本管理' },
+      { key: 'master',   label: '⚙️ 基礎資料 Master Data' },
     ],
     masterTabs: [
-      { key: 'bu', label: 'BU' },
-      { key: 'accmgr', label: 'Acc Mgr' },
-      { key: 'customer', label: 'Customer' },
-      { key: 'pl', label: 'Product Line' },
-      { key: 'sites', label: 'Sites (RD/MFG)' },
-      { key: 'model', label: 'Model' },
+      { key: 'org',     label: '🏢 組織架構 BU / Mgr / Customer / PL' },
+      { key: 'sites',   label: 'Sites (RD / MFG)' },
+      { key: 'model',   label: 'Model' },
       { key: 'pricing', label: '📊 Model Pricing' },
-      { key: 'cat1', label: 'Category1 選項' },
+      { key: 'cat1',    label: 'Category1 選項' },
     ],
     monthCols: [
       { key: 'vol', label: 'Volume' },
@@ -881,10 +867,8 @@ function fcstApp() {
     // ── Init ──
     init() {
       this.load();
-      // auto-save on any data change
       this.$watch('fcstRows', () => this.debouncedSave(), { deep: true });
     },
-
     _saveTimer: null,
     debouncedSave() {
       clearTimeout(this._saveTimer);
@@ -892,7 +876,7 @@ function fcstApp() {
       this.saveStatus = '⏳ 待儲存...';
     },
 
-    // ── Computed ──
+    // ── Computed getters ──
     get currentVersion() {
       return this.versions.find(v => v.id === this.currentVersionId) || null;
     },
@@ -900,40 +884,51 @@ function fcstApp() {
       if (!this.currentVersion) return [];
       return this.genMonths(this.currentVersion.startMonth, this.currentVersion.numMonths);
     },
+    get currentVersionRowCount() {
+      return this.fcstRows.filter(r => r.versionId === this.currentVersionId).length;
+    },
     get displayRows() {
       if (!this.currentVersionId) return [];
       return this.fcstRows.filter(r => {
         if (r.versionId !== this.currentVersionId) return false;
         if (this.ff.customerId && r.customerId !== this.ff.customerId) return false;
-        if (this.ff.accMgrId) {
+        if (this.sessionBuId || this.sessionAccMgrId) {
           const cust = this.customers.find(c => c.id === r.customerId);
-          if (!cust || cust.accMgrId !== this.ff.accMgrId) return false;
-        }
-        if (this.ff.buId) {
-          const cust = this.customers.find(c => c.id === r.customerId);
-          if (!cust || cust.buId !== this.ff.buId) return false;
+          if (this.sessionBuId && cust?.buId !== this.sessionBuId) return false;
+          if (this.sessionAccMgrId && cust?.accMgrId !== this.sessionAccMgrId) return false;
         }
         return true;
       });
     },
-    get currentVersionRowCount() {
-      return this.fcstRows.filter(r => r.versionId === this.currentVersionId).length;
+    get sessionAccMgrs() {
+      if (!this.sessionBuId) return this.accMgrs;
+      return this.accMgrs.filter(a => a.buId === this.sessionBuId);
     },
-    get ffAccMgrs() {
-      if (!this.ff.buId) return this.accMgrs;
-      return this.accMgrs.filter(a => a.buId === this.ff.buId);
-    },
-    get ffCustomers() {
+    get sessionCustomers() {
       return this.customers.filter(c => {
-        if (this.ff.buId && c.buId !== this.ff.buId) return false;
-        if (this.ff.accMgrId && c.accMgrId !== this.ff.accMgrId) return false;
+        if (this.sessionBuId && c.buId !== this.sessionBuId) return false;
+        if (this.sessionAccMgrId && c.accMgrId !== this.sessionAccMgrId) return false;
         return true;
       });
+    },
+    get modelFilterCustomers() {
+      return this.customers.filter(c => {
+        if (this.modelFilter.buId && c.buId !== this.modelFilter.buId) return false;
+        if (this.modelFilter.accMgrId && c.accMgrId !== this.modelFilter.accMgrId) return false;
+        return true;
+      });
+    },
+    get filteredModels() {
+      if (!this.modelFilter.customerId) return this.models;
+      const custId = this.modelFilter.customerId;
+      const modelIds = new Set(
+        this.pricing.filter(p => !p.customerId || p.customerId === custId).map(p => p.modelId)
+      );
+      return this.models.filter(m => modelIds.has(m.id));
     },
 
     // ── Helpers ──
     uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); },
-
     genMonths(start, n) {
       if (!start || !n) return [];
       const months = [];
@@ -944,57 +939,68 @@ function fcstApp() {
       }
       return months;
     },
-
-    nameOf(collection, id) {
+    nameOf(col, id) {
       if (!id) return '';
-      const item = this[collection]?.find(x => x.id === id);
-      return item?.name || id;
+      return this[col]?.find(x => x.id === id)?.name || '';
     },
-
-    plBU(plId) {
-      return this.productLines.find(p => p.id === plId)?.buId || '';
-    },
-
     fmtN(v) {
       if (v === null || v === undefined || v === '') return '—';
       const n = Number(v);
       if (isNaN(n)) return '—';
       return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     },
-
     dtBadge(dt) {
-      if (dt === 'Plan') return 'bg-blue-100 text-blue-700';
-      if (dt === 'Annual Plan') return 'bg-purple-100 text-purple-700';
-      if (dt === 'Actual') return 'bg-green-100 text-green-700';
-      return 'bg-gray-100 text-gray-600';
+      const m = { 'Plan':'bg-blue-100 text-blue-700', 'Annual Plan':'bg-purple-100 text-purple-700', 'Actual':'bg-green-100 text-green-700' };
+      return m[dt] || 'bg-gray-100 text-gray-600';
     },
     cat1Badge(c1) {
-      if (c1 === 'Revenue') return 'bg-green-100 text-green-700';
-      if (c1 === 'NRE') return 'bg-blue-100 text-blue-700';
-      if (c1 === 'Expense') return 'bg-orange-100 text-orange-700';
-      if (c1 === 'Others') return 'bg-gray-100 text-gray-600';
-      return 'bg-gray-100 text-gray-500';
+      const m = { 'Revenue':'bg-green-100 text-green-700', 'NRE':'bg-blue-100 text-blue-700', 'Expense':'bg-orange-100 text-orange-700', 'Others':'bg-gray-100 text-gray-600' };
+      return m[c1] || 'bg-gray-100 text-gray-500';
     },
-
     showToast(msg, type='ok') {
       this.toast = { show: true, msg, type };
       setTimeout(() => this.toast.show = false, 3000);
     },
 
+    // ── Model / Cat2 helpers ──
+    modelCat2(modelId) {
+      return this.models.find(m => m.id === modelId)?.category2 || '';
+    },
+    modelCat2Options(modelId) {
+      // Primary cat2 from model master, plus any additional cat2 already used for this model
+      const opts = new Set();
+      const m = this.models.find(x => x.id === modelId);
+      if (m?.category2) opts.add(m.category2);
+      this.fcstRows.filter(r => r.modelId === modelId && r.category2).forEach(r => opts.add(r.category2));
+      return [...opts];
+    },
+    customerModels(customerId) {
+      if (!customerId) return this.models;
+      const modelIds = new Set(
+        this.pricing.filter(p => !p.customerId || p.customerId === customerId).map(p => p.modelId)
+      );
+      return modelIds.size ? this.models.filter(m => modelIds.has(m.id)) : this.models;
+    },
+    pricingForCustomer(customerId) {
+      return this.pricing.filter(p => !p.customerId || p.customerId === customerId);
+    },
+    selectAllPricing() {
+      const opts = this.pricingForCustomer(this.loadForm.customerId);
+      this.loadForm.selectedPricing = opts.map(p => p.id);
+    },
+
     // ── Pricing lookup ──
     getPricing(modelId, customerId, month) {
-      // Find best matching pricing: model+customer match, or model+all, effective date ≤ month
       const candidates = this.pricing.filter(p => {
         if (p.modelId !== modelId) return false;
         if (p.customerId && p.customerId !== customerId) return false;
-        if (p.effectiveDate > month) return false;
+        if (month && p.effectiveDate > month) return false;
         return true;
       });
-      // Sort: prefer customer-specific over all, then most recent date
       candidates.sort((a, b) => {
-        const aSpecific = a.customerId === customerId ? 1 : 0;
-        const bSpecific = b.customerId === customerId ? 1 : 0;
-        if (aSpecific !== bSpecific) return bSpecific - aSpecific;
+        const aS = a.customerId === customerId ? 1 : 0;
+        const bS = b.customerId === customerId ? 1 : 0;
+        if (aS !== bS) return bS - aS;
         return b.effectiveDate.localeCompare(a.effectiveDate);
       });
       return candidates[0] || null;
@@ -1003,50 +1009,28 @@ function fcstApp() {
     // ── Row calculations ──
     rowRevenue(row, mi) {
       const vol = Number(row.volumes[mi]) || 0;
-      const month = this.currentMonths[mi] || '';
-      const p = this.getPricing(row.modelId, row.customerId, month);
-      const asp = Number(row.aspOverride ?? p?.asp) || 0;
-      return vol * asp;
+      const p = this.getPricing(row.modelId, row.customerId, this.currentMonths[mi]);
+      return vol * (Number(p?.asp) || 0);
     },
     rowBomCost(row, mi) {
       const vol = Number(row.volumes[mi]) || 0;
-      const month = this.currentMonths[mi] || '';
-      const p = this.getPricing(row.modelId, row.customerId, month);
-      const bom = Number(row.bomOverride ?? p?.bom) || 0;
-      return vol * bom;
+      const p = this.getPricing(row.modelId, row.customerId, this.currentMonths[mi]);
+      return vol * (Number(p?.bom) || 0);
     },
     rowGP(row, mi) {
       return this.rowRevenue(row, mi) - this.rowBomCost(row, mi);
     },
-
     colSum(type, mi) {
-      return this.displayRows.reduce((sum, row) => {
-        if (type === 'vol') return sum + (Number(row.volumes[mi]) || 0);
-        if (type === 'rev') return sum + this.rowRevenue(row, mi);
-        if (type === 'bom') return sum + this.rowBomCost(row, mi);
-        if (type === 'gp')  return sum + this.rowGP(row, mi);
-        return sum;
+      return this.displayRows.reduce((s, r) => {
+        if (type === 'vol') return s + (Number(r.volumes[mi]) || 0);
+        if (type === 'rev') return s + this.rowRevenue(r, mi);
+        if (type === 'bom') return s + this.rowBomCost(r, mi);
+        if (type === 'gp')  return s + this.rowGP(r, mi);
+        return s;
       }, 0);
     },
 
-    // ── Customer/Model helpers ──
-    customerModels(customerId) {
-      if (!customerId) return this.models;
-      // Models that have pricing for this customer (or generic)
-      const modelIds = new Set(
-        this.pricing
-          .filter(p => !p.customerId || p.customerId === customerId)
-          .map(p => p.modelId)
-      );
-      if (modelIds.size === 0) return this.models; // fallback: all models
-      return this.models.filter(m => modelIds.has(m.id));
-    },
-
-    pricingForCustomer(customerId) {
-      return this.pricing.filter(p => !p.customerId || p.customerId === customerId);
-    },
-
-    // ── FCST row ops ──
+    // ── FCST row operations ──
     addEmptyRow() {
       if (!this.currentVersionId) return;
       this.fcstRows.push({
@@ -1059,47 +1043,44 @@ function fcstApp() {
         volumes: new Array(this.currentMonths.length).fill(null),
       });
     },
-
     duplicateRow(row) {
-      const newRow = JSON.parse(JSON.stringify(row));
-      newRow.id = this.uid();
+      const nr = JSON.parse(JSON.stringify(row));
+      nr.id = this.uid();
       const idx = this.fcstRows.findIndex(r => r.id === row.id);
-      this.fcstRows.splice(idx + 1, 0, newRow);
+      this.fcstRows.splice(idx + 1, 0, nr);
     },
-
     deleteRow(id) {
       this.fcstRows = this.fcstRows.filter(r => r.id !== id);
     },
-
     onRowCustomerChange(row) {
       row.modelId = '';
+      row.category2 = '';
     },
-
     onRowModelChange(row) {
-      // Auto-fill category1/category2 from pricing if available
+      // Auto-fill Cat2 from model master
+      const m = this.models.find(x => x.id === row.modelId);
+      if (m?.category2) row.category2 = m.category2;
+      // Auto-fill Cat1 from pricing
       const month = this.currentMonths[0] || '';
       const p = this.getPricing(row.modelId, row.customerId, month);
-      if (p) {
-        if (!row.category1 && p.category1) row.category1 = p.category1;
-        if (!row.category2 && p.category2) row.category2 = p.category2;
-      }
+      if (p?.category1 && !row.category1) row.category1 = p.category1;
     },
-
     loadCustomerModels() {
       if (!this.loadForm.customerId || !this.currentVersionId) return;
-      const numMonths = this.currentMonths.length;
+      const n = this.currentMonths.length;
       let added = 0;
       for (const pId of this.loadForm.selectedPricing) {
         const p = this.pricing.find(x => x.id === pId);
         if (!p) continue;
+        const m = this.models.find(x => x.id === p.modelId);
         this.fcstRows.push({
           id: this.uid(),
           versionId: this.currentVersionId,
           customerId: this.loadForm.customerId,
           modelId: p.modelId,
           category1: p.category1 || '',
-          category2: p.category2 || '',
-          volumes: new Array(numMonths).fill(null),
+          category2: m?.category2 || '',
+          volumes: new Array(n).fill(null),
         });
         added++;
       }
@@ -1107,25 +1088,20 @@ function fcstApp() {
       this.loadForm = { customerId: '', selectedPricing: [] };
       this.showToast(`已新增 ${added} 行`);
     },
-
     openLoadModelsModal() {
       this.loadForm = { customerId: this.ff.customerId || '', selectedPricing: [] };
       this.showLoadModal = true;
     },
 
-    // ── Version ops ──
+    // ── Version operations ──
     onVersionChange() {
-      // ensure row volumes array is sized correctly
       if (this.currentVersion) {
         const n = this.currentVersion.numMonths;
-        this.fcstRows
-          .filter(r => r.versionId === this.currentVersionId)
-          .forEach(r => {
-            while (r.volumes.length < n) r.volumes.push(null);
-          });
+        this.fcstRows.filter(r => r.versionId === this.currentVersionId).forEach(r => {
+          while (r.volumes.length < n) r.volumes.push(null);
+        });
       }
     },
-
     openNewVersionModal() {
       this.editingVersion = null;
       const now = new Date();
@@ -1134,43 +1110,30 @@ function fcstApp() {
       this.vForm = { label: `${y}${m} 3M FCST`, dataType: 'Plan', startMonth: `${y}-${m}`, numMonths: 3, note: '' };
       this.showVersionModal = true;
     },
-
     openEditVersionModal(v) {
       this.editingVersion = v;
       this.vForm = { label: v.label, dataType: v.dataType, startMonth: v.startMonth, numMonths: v.numMonths, note: v.note || '' };
       this.showVersionModal = true;
     },
-
     onVFormTypeChange() {
       if (this.vForm.dataType === 'Actual') this.vForm.numMonths = 1;
       else if (this.vForm.dataType === 'Annual Plan') this.vForm.numMonths = 12;
       else this.vForm.numMonths = 3;
     },
-
-    previewMonths() {
-      return this.genMonths(this.vForm.startMonth, this.vForm.numMonths);
-    },
-
+    previewMonths() { return this.genMonths(this.vForm.startMonth, this.vForm.numMonths); },
     saveVersion() {
       if (!this.vForm.label.trim()) { this.showToast('請輸入版本標籤', 'error'); return; }
       if (!this.vForm.startMonth) { this.showToast('請選擇起始月份', 'error'); return; }
       if (this.editingVersion) {
         Object.assign(this.editingVersion, {
-          label: this.vForm.label.trim(),
-          dataType: this.vForm.dataType,
-          startMonth: this.vForm.startMonth,
-          numMonths: Number(this.vForm.numMonths),
-          note: this.vForm.note,
+          label: this.vForm.label.trim(), dataType: this.vForm.dataType,
+          startMonth: this.vForm.startMonth, numMonths: Number(this.vForm.numMonths), note: this.vForm.note,
         });
       } else {
         const v = {
-          id: this.uid(),
-          label: this.vForm.label.trim(),
-          dataType: this.vForm.dataType,
-          startMonth: this.vForm.startMonth,
-          numMonths: Number(this.vForm.numMonths),
-          note: this.vForm.note,
-          createdAt: new Date().toLocaleString('zh-TW'),
+          id: this.uid(), label: this.vForm.label.trim(), dataType: this.vForm.dataType,
+          startMonth: this.vForm.startMonth, numMonths: Number(this.vForm.numMonths),
+          note: this.vForm.note, createdAt: new Date().toLocaleString('zh-TW'),
         };
         this.versions.push(v);
         this.currentVersionId = v.id;
@@ -1180,50 +1143,37 @@ function fcstApp() {
       this.saveAll();
       this.showToast('版本已儲存');
     },
-
     deleteVersion(id) {
-      if (!confirm('確定刪除此版本及其所有資料？')) return;
+      if (!confirm('確定刪除此版本及所有資料？')) return;
       this.versions = this.versions.filter(v => v.id !== id);
       this.fcstRows = this.fcstRows.filter(r => r.versionId !== id);
       if (this.currentVersionId === id) this.currentVersionId = '';
       this.saveAll();
-      this.showToast('版本已刪除');
+      this.showToast('已刪除');
     },
+    switchToVersion(id) { this.currentVersionId = id; this.activeTab = 'fcst'; this.onVersionChange(); },
+    getRowCount(vId) { return this.fcstRows.filter(r => r.versionId === vId).length; },
 
-    switchToVersion(id) {
-      this.currentVersionId = id;
-      this.activeTab = 'fcst';
-      this.onVersionChange();
-    },
-
-    getRowCount(versionId) {
-      return this.fcstRows.filter(r => r.versionId === versionId).length;
-    },
-
-    // ── Master data ops ──
+    // ── Master data operations ──
     addBU() {
       if (!this.forms.bu.name.trim()) return;
       this.bus.push({ id: this.uid(), name: this.forms.bu.name.trim() });
-      this.forms.bu.name = '';
-      this.saveAll();
+      this.forms.bu.name = ''; this.saveAll();
     },
     addAccMgr() {
       if (!this.forms.accMgr.name.trim()) return;
       this.accMgrs.push({ id: this.uid(), name: this.forms.accMgr.name.trim(), buId: this.forms.accMgr.buId });
-      this.forms.accMgr.name = '';
-      this.saveAll();
+      this.forms.accMgr.name = ''; this.saveAll();
     },
     addCustomer() {
       if (!this.forms.customer.name.trim()) return;
       this.customers.push({ id: this.uid(), name: this.forms.customer.name.trim(), buId: this.forms.customer.buId, accMgrId: this.forms.customer.accMgrId });
-      this.forms.customer.name = '';
-      this.saveAll();
+      this.forms.customer.name = ''; this.saveAll();
     },
     addPL() {
       if (!this.forms.pl.name.trim()) return;
-      this.productLines.push({ id: this.uid(), name: this.forms.pl.name.trim(), buId: this.forms.pl.buId });
-      this.forms.pl.name = '';
-      this.saveAll();
+      this.productLines.push({ id: this.uid(), name: this.forms.pl.name.trim() });
+      this.forms.pl.name = ''; this.saveAll();
     },
     addSite(type) {
       if (type === 'rd') {
@@ -1240,24 +1190,21 @@ function fcstApp() {
     addModel() {
       if (!this.forms.model.name.trim()) return;
       this.models.push({
-        id: this.uid(),
-        name: this.forms.model.name.trim(),
-        plId: this.forms.model.plId,
-        rdSiteId: this.forms.model.rdSiteId,
-        mfgSiteId: this.forms.model.mfgSiteId,
+        id: this.uid(), name: this.forms.model.name.trim(),
+        plId: this.forms.model.plId, category2: this.forms.model.category2,
+        rdSiteId: this.forms.model.rdSiteId, mfgSiteId: this.forms.model.mfgSiteId,
       });
-      this.forms.model.name = '';
+      this.forms.model.name = ''; this.forms.model.category2 = '';
       this.saveAll();
     },
     addPricing() {
       if (!this.forms.pricing.modelId) { this.showToast('請選擇 Model', 'error'); return; }
-      if (!this.forms.pricing.effectiveDate) { this.showToast('請選擇生效日期', 'error'); return; }
+      if (!this.forms.pricing.effectiveDate) { this.showToast('請選擇生效日', 'error'); return; }
       this.pricing.push({
         id: this.uid(),
         modelId: this.forms.pricing.modelId,
         customerId: this.forms.pricing.customerId || '',
         category1: this.forms.pricing.category1,
-        category2: this.forms.pricing.category2,
         asp: this.forms.pricing.asp,
         bom: this.forms.pricing.bom,
         mfc: this.forms.pricing.mfc,
@@ -1267,60 +1214,55 @@ function fcstApp() {
         logistics: this.forms.pricing.logistics,
         effectiveDate: this.forms.pricing.effectiveDate,
       });
-      this.forms.pricing = { modelId: '', customerId: '', asp: '', bom: '', mfc: '', sga: '', rma: '', royalty: '', logistics: '', category1: '', category2: '', effectiveDate: '' };
-      this.saveAll();
-      this.showToast('定價記錄已新增');
+      this.forms.pricing = { modelId: '', customerId: '', asp: '', bom: '', mfc: '', sga: '', rma: '', royalty: '', logistics: '', category1: '', effectiveDate: '' };
+      this.saveAll(); this.showToast('定價記錄已新增');
     },
     addCat1() {
       if (!this.forms.cat1.name.trim()) return;
       if (!this.cat1List.includes(this.forms.cat1.name.trim())) {
-        this.cat1List.push(this.forms.cat1.name.trim());
-        this.saveAll();
+        this.cat1List.push(this.forms.cat1.name.trim()); this.saveAll();
       }
       this.forms.cat1.name = '';
     },
-    deleteItem(collection, id) {
-      this[collection] = this[collection].filter(x => x.id !== id);
-      this.saveAll();
+    deleteItem(col, id) {
+      this[col] = this[col].filter(x => x.id !== id); this.saveAll();
     },
 
     // ── Persistence ──
     saveAll() {
-      const data = {
+      localStorage.setItem('fcst_v2', JSON.stringify({
         bus: this.bus, accMgrs: this.accMgrs, customers: this.customers,
         productLines: this.productLines, rdSites: this.rdSites, mfgSites: this.mfgSites,
         models: this.models, pricing: this.pricing, cat1List: this.cat1List,
         versions: this.versions, fcstRows: this.fcstRows,
-      };
-      localStorage.setItem('fcst_data', JSON.stringify(data));
+      }));
       this.saveStatus = '✅ 已儲存 ' + new Date().toLocaleTimeString('zh-TW');
     },
-
     load() {
       try {
-        const raw = localStorage.getItem('fcst_data');
+        // Try new key first, fall back to old
+        const raw = localStorage.getItem('fcst_v2') || localStorage.getItem('fcst_data_v2') || localStorage.getItem('fcst_data');
         if (!raw) return;
         const d = JSON.parse(raw);
         this.bus = d.bus || [];
         this.accMgrs = d.accMgrs || [];
         this.customers = d.customers || [];
-        this.productLines = d.productLines || [];
+        // Strip buId from productLines if present (migration)
+        this.productLines = (d.productLines || []).map(p => ({ id: p.id, name: p.name }));
         this.rdSites = d.rdSites || [];
         this.mfgSites = d.mfgSites || [];
-        this.models = d.models || [];
-        this.pricing = d.pricing || [];
+        // Ensure models have category2 field
+        this.models = (d.models || []).map(m => ({ ...m, category2: m.category2 || '' }));
+        // Strip category2 from pricing if present (migration)
+        this.pricing = (d.pricing || []).map(({ category2, ...rest }) => rest);
         this.cat1List = d.cat1List || ['Revenue', 'NRE', 'Expense', 'Others'];
         this.versions = d.versions || [];
         this.fcstRows = d.fcstRows || [];
-      } catch(e) {
-        console.error('Load error:', e);
-      }
+      } catch(e) { console.error('Load error:', e); }
     },
-
     exportBackup() {
       const data = {
-        _version: 1,
-        _exportedAt: new Date().toISOString(),
+        _v: 2, _at: new Date().toISOString(),
         bus: this.bus, accMgrs: this.accMgrs, customers: this.customers,
         productLines: this.productLines, rdSites: this.rdSites, mfgSites: this.mfgSites,
         models: this.models, pricing: this.pricing, cat1List: this.cat1List,
@@ -1333,38 +1275,30 @@ function fcstApp() {
       a.click();
       this.showToast('備份已匯出');
     },
-
     importBackup(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+      const file = event.target.files[0]; if (!file) return;
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           const d = JSON.parse(e.target.result);
-          if (!confirm(`確定匯入備份？\n匯出時間: ${d._exportedAt || '未知'}\n這將合併到現有資料中（版本以 ID 去重）。`)) return;
-          // Merge (append non-existing by ID)
+          if (!confirm(`確定匯入備份？\n匯出時間: ${d._at||'未知'}\n（合併至現有資料，ID 相同者不重複匯入）`)) return;
           const merge = (local, incoming) => {
             const ids = new Set(local.map(x => x.id));
-            return [...local, ...incoming.filter(x => !ids.has(x.id))];
+            return [...local, ...(incoming || []).filter(x => !ids.has(x.id))];
           };
-          this.bus = merge(this.bus, d.bus || []);
-          this.accMgrs = merge(this.accMgrs, d.accMgrs || []);
-          this.customers = merge(this.customers, d.customers || []);
-          this.productLines = merge(this.productLines, d.productLines || []);
-          this.rdSites = merge(this.rdSites, d.rdSites || []);
-          this.mfgSites = merge(this.mfgSites, d.mfgSites || []);
-          this.models = merge(this.models, d.models || []);
-          this.pricing = merge(this.pricing, d.pricing || []);
-          this.versions = merge(this.versions, d.versions || []);
-          this.fcstRows = merge(this.fcstRows, d.fcstRows || []);
-          if (d.cat1List) {
-            this.cat1List = [...new Set([...this.cat1List, ...d.cat1List])];
-          }
-          this.saveAll();
-          this.showToast('備份已匯入合併');
-        } catch(err) {
-          this.showToast('匯入失敗：檔案格式錯誤', 'error');
-        }
+          this.bus = merge(this.bus, d.bus);
+          this.accMgrs = merge(this.accMgrs, d.accMgrs);
+          this.customers = merge(this.customers, d.customers);
+          this.productLines = merge(this.productLines, d.productLines);
+          this.rdSites = merge(this.rdSites, d.rdSites);
+          this.mfgSites = merge(this.mfgSites, d.mfgSites);
+          this.models = merge(this.models, d.models);
+          this.pricing = merge(this.pricing, d.pricing);
+          this.versions = merge(this.versions, d.versions);
+          this.fcstRows = merge(this.fcstRows, d.fcstRows);
+          if (d.cat1List) this.cat1List = [...new Set([...this.cat1List, ...d.cat1List])];
+          this.saveAll(); this.showToast('備份已匯入合併');
+        } catch { this.showToast('匯入失敗：格式錯誤', 'error'); }
         event.target.value = '';
       };
       reader.readAsText(file);
@@ -1372,87 +1306,65 @@ function fcstApp() {
 
     // ── Excel export ──
     exportCurrentVersionExcel() {
-      if (!this.currentVersionId) return;
-      this.exportVersionExcel(this.currentVersionId);
+      if (this.currentVersionId) this.exportVersionExcel(this.currentVersionId);
     },
-
-    exportVersionExcel(versionId) {
-      const v = this.versions.find(x => x.id === versionId);
-      if (!v) return;
+    exportVersionExcel(vId) {
+      const v = this.versions.find(x => x.id === vId); if (!v) return;
       const months = this.genMonths(v.startMonth, v.numMonths);
-      const rows = this.fcstRows.filter(r => r.versionId === versionId);
+      const rows = this.fcstRows.filter(r => r.versionId === vId);
 
-      // Build header
-      const header1 = ['FCST Version', 'BU', 'Acc Mgr', 'Customer', 'Product Line', 'RD Site', 'MFG Site', 'Model', 'Category1', 'Category2 / Project'];
-      const header2 = [...header1];
+      const fixedHdr = ['FCST Version', 'BU', 'Acc Mgr', 'Customer', 'Model', 'Product Line', 'Category2', 'RD Site', 'MFG Site', 'Category1'];
+      const h1 = [...fixedHdr];
+      const h2 = [...fixedHdr];
       for (const m of months) {
-        header1.push(m, '', '', '');
-        header2.push('Volume', 'Revenue', 'BOM Cost', 'Gross Profit');
+        h1.push(m, '', '', '');
+        h2.push('Volume', 'Revenue', 'BOM Cost', 'Gross Profit');
       }
 
-      const wb = XLSX.utils.book_new();
-      const wsData = [header1, header2];
-
+      const wsData = [h1, h2];
       for (const row of rows) {
-        const cust = this.customers.find(c => c.id === row.customerId);
+        const cust  = this.customers.find(c => c.id === row.customerId);
         const model = this.models.find(m => m.id === row.modelId);
-        const pl = model ? this.productLines.find(p => p.id === model.plId) : null;
-        const rdSite = model ? this.rdSites.find(s => s.id === model.rdSiteId) : null;
-        const mfgSite = model ? this.mfgSites.find(s => s.id === model.mfgSiteId) : null;
+        const pl    = model ? this.productLines.find(p => p.id === model.plId) : null;
         const accMgr = cust ? this.accMgrs.find(a => a.id === cust.accMgrId) : null;
-        const bu = cust ? this.bus.find(b => b.id === cust.buId) : null;
+        const bu    = cust ? this.bus.find(b => b.id === cust.buId) : null;
+        const rd    = model ? this.rdSites.find(s => s.id === model.rdSiteId) : null;
+        const mfg   = model ? this.mfgSites.find(s => s.id === model.mfgSiteId) : null;
 
-        const dataRow = [
-          v.label,
-          bu?.name || '',
-          accMgr?.name || '',
-          cust?.name || '',
-          pl?.name || '',
-          rdSite?.name || '',
-          mfgSite?.name || '',
-          model?.name || '',
-          row.category1 || '',
-          row.category2 || '',
+        const dr = [
+          v.label, bu?.name || '', accMgr?.name || '', cust?.name || '',
+          model?.name || '', pl?.name || '',
+          model?.category2 || row.category2 || '',
+          rd?.name || '', mfg?.name || '', row.category1 || '',
         ];
 
         months.forEach((m, mi) => {
           const vol = Number(row.volumes[mi]) || 0;
           const p = this.getPricing(row.modelId, row.customerId, m);
-          const asp = Number(row.aspOverride ?? p?.asp) || 0;
-          const bom = Number(row.bomOverride ?? p?.bom) || 0;
-          const rev = vol * asp;
-          const gp = vol * (asp - bom);
-          dataRow.push(vol, rev, vol * bom, gp);
+          const asp = Number(p?.asp) || 0;
+          const bom = Number(p?.bom) || 0;
+          dr.push(vol, vol * asp, vol * bom, vol * (asp - bom));
         });
-
-        wsData.push(dataRow);
+        wsData.push(dr);
       }
 
+      const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-      // Merge header cells for month groups
       if (!ws['!merges']) ws['!merges'] = [];
-      const fixedCols = header1.length - months.length * 4;
       months.forEach((m, mi) => {
-        const startCol = fixedCols + mi * 4;
-        ws['!merges'].push({ s: { r: 0, c: startCol }, e: { r: 0, c: startCol + 3 } });
+        const s = fixedHdr.length + mi * 4;
+        ws['!merges'].push({ s: { r: 0, c: s }, e: { r: 0, c: s + 3 } });
       });
-
-      // Column widths
       ws['!cols'] = [
-        { wch: 18 }, { wch: 10 }, { wch: 12 }, { wch: 16 },
-        { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 16 },
-        { wch: 10 }, { wch: 14 },
+        ...fixedHdr.map(() => ({ wch: 14 })),
         ...months.flatMap(() => [{ wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 }]),
       ];
-
       XLSX.utils.book_append_sheet(wb, ws, v.label.slice(0, 31));
-      XLSX.writeFile(wb, `FCST_${v.label.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
+      XLSX.writeFile(wb, `FCST_${v.label.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`);
       this.showToast('Excel 已匯出');
     },
   };
 }
 </script>
-
 </body>
 </html>
