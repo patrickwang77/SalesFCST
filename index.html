@@ -456,10 +456,10 @@
         </div>
       </div>
 
-      <!-- MODEL — 單頭設定 BU/AccMgr/Customer context，單身顯示該 Customer 綁定的 Model -->
+      <!-- MODEL 管理 — 建立 Model 並綁定到 Customer -->
       <div x-show="masterTab==='model'">
 
-        <!-- 單頭 Header: context selector -->
+        <!-- 單頭: 選擇 Customer Context -->
         <div class="ctx-box mb-4">
           <div class="text-xs font-semibold text-blue-700 mb-2">📌 設定綁定對象 Customer Context</div>
           <div class="flex flex-wrap gap-3 items-end">
@@ -499,20 +499,19 @@
           </div>
         </div>
 
-        <!-- 選擇 Customer 後顯示綁定內容 -->
+        <!-- 選擇 Customer 後顯示內容 -->
         <template x-if="modelCtx.customerId">
           <div>
-            <!-- 單身: 綁定的 Model 列表 -->
+            <!-- 已綁定 Model 清單 -->
             <div class="flex justify-between items-center mb-2">
               <h3 class="text-sm font-semibold text-gray-700">
                 已綁定的 Model
                 <span class="text-xs font-normal text-gray-400 ml-1">(for <span x-text="nameOf('customers',modelCtx.customerId)"></span>)</span>
               </h3>
               <button @click="bindAllModels()" class="text-xs px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 font-medium">
-                全部 Model 加入綁定
+                全部既有 Model 加入綁定
               </button>
             </div>
-
             <div class="overflow-x-auto mb-4">
               <table class="w-full text-sm border-collapse">
                 <thead><tr class="bg-gray-50 text-xs text-gray-500 border-b">
@@ -550,33 +549,111 @@
               </table>
             </div>
 
-            <!-- 新增綁定 -->
-            <div class="border rounded-xl p-4 bg-gray-50">
-              <div class="panel-title mb-3">新增 Model 綁定</div>
-              <div class="flex flex-wrap gap-3 items-end">
-                <div>
-                  <label class="block text-xs text-gray-500 mb-1">選擇 Model *</label>
-                  <select x-model="forms.modelBind.modelId" class="border rounded-lg px-3 py-1.5 text-sm bg-white min-w-[200px]">
-                    <option value="">— 選擇 Model —</option>
-                    <template x-for="m in unboundModels" :key="m.id">
-                      <option :value="m.id" x-text="m.name + (m.category2 ? ' ['+m.category2+']' : '')"></option>
+            <!-- 新增區：兩欄佈局 -->
+            <div class="grid grid-cols-2 gap-4">
+
+              <!-- 左：新增全新 Model 並自動綁定 -->
+              <div class="border rounded-xl p-4 bg-gray-50">
+                <div class="panel-title mb-3">＋ 新增 Model 並綁定至此 Customer</div>
+                <div class="space-y-2">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="col-span-2">
+                      <label class="block text-xs text-gray-500 mb-1">Model Name *</label>
+                      <input type="text" x-model="forms.model.name" @keydown.enter="addModelAndBind()" placeholder="Model Name" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-gray-500 mb-1">Product Line</label>
+                      <select x-model="forms.model.plId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+                        <option value="">— PL —</option>
+                        <template x-for="p in productLines" :key="p.id"><option :value="p.id" x-text="p.name"></option></template>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs text-gray-500 mb-1">Category1 (預設)</label>
+                      <select x-model="forms.model.bindCat1" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+                        <option value="">—</option>
+                        <template x-for="c1 in cat1List" :key="c1"><option :value="c1" x-text="c1"></option></template>
+                      </select>
+                    </div>
+                    <div class="col-span-2">
+                      <label class="block text-xs text-gray-500 mb-1">Category2 / Project</label>
+                      <input type="text" x-model="forms.model.category2" placeholder="Project name" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+                    </div>
+                    <div>
+                      <label class="block text-xs text-gray-500 mb-1">RD Site</label>
+                      <select x-model="forms.model.rdSiteId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+                        <option value="">— RD Site —</option>
+                        <template x-for="s in rdSites" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs text-gray-500 mb-1">MFG Site</label>
+                      <select x-model="forms.model.mfgSiteId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+                        <option value="">— MFG Site —</option>
+                        <template x-for="s in mfgSites" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
+                      </select>
+                    </div>
+                  </div>
+                  <button @click="addModelAndBind()" class="w-full mt-1 px-4 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 font-medium">
+                    ＋ 新增並綁定
+                  </button>
+                </div>
+              </div>
+
+              <!-- 右：綁定現有 Model -->
+              <div class="border rounded-xl p-4 bg-gray-50">
+                <div class="panel-title mb-3">🔗 綁定現有 Model</div>
+                <template x-if="unboundModels.length > 0">
+                  <div class="space-y-2">
+                    <div>
+                      <label class="block text-xs text-gray-500 mb-1">選擇 Model *</label>
+                      <select x-model="forms.modelBind.modelId" class="border rounded-lg px-3 py-1.5 text-sm bg-white w-full">
+                        <option value="">— 選擇 Model —</option>
+                        <template x-for="m in unboundModels" :key="m.id">
+                          <option :value="m.id" x-text="m.name + (m.category2 ? ' ['+m.category2+']' : '')"></option>
+                        </template>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs text-gray-500 mb-1">Category1 (預設)</label>
+                      <select x-model="forms.modelBind.category1" class="border rounded-lg px-3 py-1.5 text-sm bg-white w-full">
+                        <option value="">—</option>
+                        <template x-for="c1 in cat1List" :key="c1"><option :value="c1" x-text="c1"></option></template>
+                      </select>
+                    </div>
+                    <button @click="addBinding()" class="w-full mt-1 px-4 py-2 bg-indigo-600 text-white text-xs rounded-lg hover:bg-indigo-700 font-medium">
+                      ＋ 新增綁定
+                    </button>
+                  </div>
+                </template>
+                <template x-if="unboundModels.length === 0">
+                  <div class="py-8 text-center text-gray-400 text-xs">
+                    <div class="text-2xl mb-1">✅</div>
+                    所有既有 Model 均已綁定至此 Customer
+                  </div>
+                </template>
+
+                <!-- 全域 Model 概覽 (折疊) -->
+                <div class="mt-4 pt-3 border-t">
+                  <div class="text-xs font-semibold text-gray-500 mb-2">全域 Model 清單 (<span x-text="models.length"></span> 個)</div>
+                  <div class="overflow-y-auto max-h-40 space-y-1">
+                    <template x-for="m in models" :key="m.id">
+                      <div class="flex justify-between items-center text-xs py-1 border-b last:border-0">
+                        <div>
+                          <span class="font-medium" x-text="m.name"></span>
+                          <span class="text-gray-400 ml-1" x-text="m.category2 ? '['+m.category2+']' : ''"></span>
+                          <span class="text-[10px] text-blue-500 ml-1" x-text="modelBindingCount(m.id) ? modelBindingCount(m.id)+'客戶' : ''"></span>
+                        </div>
+                        <button @click="deleteItem('models',m.id)" class="text-red-400 hover:text-red-600 ml-2">✕</button>
+                      </div>
                     </template>
-                  </select>
+                    <template x-if="models.length===0">
+                      <div class="py-2 text-center text-gray-400">尚無 Model</div>
+                    </template>
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-xs text-gray-500 mb-1">Category1 (預設)</label>
-                  <select x-model="forms.modelBind.category1" class="border rounded-lg px-3 py-1.5 text-sm bg-white">
-                    <option value="">—</option>
-                    <template x-for="c1 in cat1List" :key="c1"><option :value="c1" x-text="c1"></option></template>
-                  </select>
-                </div>
-                <button @click="addBinding()" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 font-medium mt-4">
-                  ＋ 新增綁定
-                </button>
               </div>
-              <div class="mt-3 text-xs text-gray-400">
-                若所需 Model 不在列表中，請先至 <button @click="masterTab='modelglobal'" class="text-blue-500 hover:underline">全域 Model 清單</button> 新增。
-              </div>
+
             </div>
           </div>
         </template>
@@ -586,79 +663,10 @@
           <div class="py-10 text-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
             <div class="text-3xl mb-2">👆</div>
             <div class="text-sm">請先在上方選擇 BU → Acc Mgr → Customer</div>
-            <div class="text-xs mt-1">選定後即可查看及設定該 Customer 的 Model 綁定清單</div>
+            <div class="text-xs mt-1">選定後即可新增 Model 並自動完成綁定</div>
           </div>
         </template>
 
-      </div>
-
-      <!-- GLOBAL MODEL LIST (新增/管理全域 Model 主檔) -->
-      <div x-show="masterTab==='modelglobal'">
-        <div class="mb-3 text-xs text-gray-500 bg-amber-50 border border-amber-200 rounded-lg p-2">
-          💡 在此管理所有 Model 的基本資料（全域），建立後再至 <button @click="masterTab='model'" class="text-blue-500 hover:underline font-medium">Model 綁定</button> 將 Model 與 Customer 綁定。
-        </div>
-        <div class="overflow-x-auto mb-4">
-          <table class="w-full text-sm border-collapse">
-            <thead><tr class="bg-gray-50 text-xs text-gray-500 border-b">
-              <th class="text-left p-2">Model Name</th>
-              <th class="text-left p-2">Product Line</th>
-              <th class="text-left p-2">Category2 / Project</th>
-              <th class="text-left p-2">RD Site</th>
-              <th class="text-left p-2">MFG Site</th>
-              <th class="text-center p-2">綁定客戶數</th>
-              <th class="p-2 w-12">操作</th>
-            </tr></thead>
-            <tbody>
-              <template x-for="m in models" :key="m.id">
-                <tr class="border-b hover:bg-gray-50">
-                  <td class="p-2 font-medium" x-text="m.name"></td>
-                  <td class="p-2 text-xs" x-text="nameOf('productLines',m.plId)||'—'"></td>
-                  <td class="p-2 text-xs text-blue-600" x-text="m.category2||'—'"></td>
-                  <td class="p-2 text-xs" x-text="nameOf('rdSites',m.rdSiteId)||'—'"></td>
-                  <td class="p-2 text-xs" x-text="nameOf('mfgSites',m.mfgSiteId)||'—'"></td>
-                  <td class="p-2 text-center text-xs text-blue-600 font-medium" x-text="modelBindingCount(m.id)"></td>
-                  <td class="p-2 text-center"><button @click="deleteItem('models',m.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button></td>
-                </tr>
-              </template>
-              <template x-if="models.length===0"><tr><td colspan="7" class="py-5 text-center text-gray-400 text-xs">尚無 Model</td></tr></template>
-            </tbody>
-          </table>
-        </div>
-        <div class="border rounded-xl p-4 bg-gray-50">
-          <div class="panel-title mb-3">新增 Model</div>
-          <div class="grid grid-cols-3 gap-3">
-            <div class="col-span-2">
-              <label class="block text-xs text-gray-500 mb-1">Model Name *</label>
-              <input type="text" x-model="forms.model.name" placeholder="Model Name" class="border rounded-lg px-3 py-1.5 text-sm w-full">
-            </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Product Line</label>
-              <select x-model="forms.model.plId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
-                <option value="">— PL —</option>
-                <template x-for="p in productLines" :key="p.id"><option :value="p.id" x-text="p.name"></option></template>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Category2 / Project</label>
-              <input type="text" x-model="forms.model.category2" placeholder="Project name" class="border rounded-lg px-3 py-1.5 text-sm w-full">
-            </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">RD Site</label>
-              <select x-model="forms.model.rdSiteId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
-                <option value="">— RD Site —</option>
-                <template x-for="s in rdSites" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">MFG Site</label>
-              <select x-model="forms.model.mfgSiteId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
-                <option value="">— MFG Site —</option>
-                <template x-for="s in mfgSites" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
-              </select>
-            </div>
-          </div>
-          <button @click="addModel()" class="mt-3 px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700">新增 Model</button>
-        </div>
       </div>
 
       <!-- MODEL PRICING -->
@@ -926,7 +934,7 @@ function fcstApp() {
       pl:        { name: '' },
       rdSite:    { name: '' },
       mfgSite:   { name: '' },
-      model:     { name: '', plId: '', category2: '', rdSiteId: '', mfgSiteId: '' },
+      model:     { name: '', plId: '', category2: '', rdSiteId: '', mfgSiteId: '', bindCat1: '' },
       modelBind: { modelId: '', category1: '' },
       pricing:   { modelId: '', customerId: '', asp: '', bom: '', mfc: '', sga: '', rma: '', royalty: '', logistics: '', category1: '', effectiveDate: '' },
       cat1:      { name: '' },
@@ -942,12 +950,11 @@ function fcstApp() {
       { key: 'master',   label: '⚙️ 基礎資料 Master Data' },
     ],
     masterTabs: [
-      { key: 'org',         label: '🏢 組織架構 BU/Mgr/Customer/PL' },
-      { key: 'sites',       label: 'Sites (RD/MFG)' },
-      { key: 'model',       label: '🔗 Model 綁定' },
-      { key: 'modelglobal', label: '📦 全域 Model 清單' },
-      { key: 'pricing',     label: '📊 Model Pricing' },
-      { key: 'cat1',        label: 'Category1 選項' },
+      { key: 'org',     label: '🏢 組織架構 BU/Mgr/Customer/PL' },
+      { key: 'sites',   label: 'Sites (RD/MFG)' },
+      { key: 'model',   label: '🔗 Model 管理' },
+      { key: 'pricing', label: '📊 Model Pricing' },
+      { key: 'cat1',    label: 'Category1 選項' },
     ],
     monthCols: [
       { key: 'vol', label: 'Volume' },
@@ -1242,7 +1249,16 @@ function fcstApp() {
     addModel() {
       if (!this.forms.model.name.trim()) return;
       this.models.push({id:this.uid(),name:this.forms.model.name.trim(),plId:this.forms.model.plId,category2:this.forms.model.category2,rdSiteId:this.forms.model.rdSiteId,mfgSiteId:this.forms.model.mfgSiteId});
-      this.forms.model.name=''; this.forms.model.category2=''; this.saveAll();
+      this.forms.model={name:'',plId:'',category2:'',rdSiteId:'',mfgSiteId:'',bindCat1:''}; this.saveAll();
+    },
+    addModelAndBind() {
+      if (!this.modelCtx.customerId) { this.showToast('請先選擇 Customer','error'); return; }
+      if (!this.forms.model.name.trim()) { this.showToast('請輸入 Model 名稱','error'); return; }
+      const mId = this.uid();
+      this.models.push({id:mId,name:this.forms.model.name.trim(),plId:this.forms.model.plId,category2:this.forms.model.category2,rdSiteId:this.forms.model.rdSiteId,mfgSiteId:this.forms.model.mfgSiteId});
+      this.modelBindings.push({id:this.uid(),customerId:this.modelCtx.customerId,modelId:mId,category1:this.forms.model.bindCat1});
+      this.forms.model={name:'',plId:'',category2:'',rdSiteId:'',mfgSiteId:'',bindCat1:''};
+      this.saveAll(); this.showToast('Model 已新增並綁定');
     },
     addPricing() {
       if (!this.forms.pricing.modelId) { this.showToast('請選擇 Model','error'); return; }
