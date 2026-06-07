@@ -41,11 +41,13 @@
   .tscroll{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 340px)}
 
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center}
-  .modal-box{background:white;border-radius:10px;padding:24px;min-width:440px;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+  .modal-box{background:white;border-radius:10px;padding:24px;min-width:460px;max-width:660px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
 
   .badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:600}
   .panel{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:14px}
   .panel-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:8px}
+  .ctx-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px}
+  .ctx-arrow{color:#93c5fd;font-size:16px;align-self:center}
 
   ::-webkit-scrollbar{width:6px;height:6px}
   ::-webkit-scrollbar-track{background:#f1f5f9}
@@ -88,7 +90,7 @@
 <!-- ==================== TAB: FCST INPUT ==================== -->
 <div x-show="activeTab==='fcst'">
 
-  <!-- Version + BU + AccMgr Panel -->
+  <!-- Version + Session BU/AccMgr -->
   <div class="bg-white rounded-xl border shadow-sm p-4 mb-3">
     <div class="flex flex-wrap items-end gap-3">
       <div>
@@ -102,7 +104,6 @@
       </div>
       <button @click="openNewVersionModal()" class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 font-medium">＋ 新建版本</button>
 
-      <!-- Session-level BU & AccMgr -->
       <div class="border-l pl-3 flex gap-3 items-end">
         <div>
           <label class="block text-xs text-gray-500 mb-1">BU <span class="text-gray-400 font-normal">(共同設定)</span></label>
@@ -181,7 +182,7 @@
               </tr>
             </thead>
             <tbody>
-              <template x-for="(row, ri) in displayRows" :key="row.id">
+              <template x-for="(row,ri) in displayRows" :key="row.id">
                 <tr>
                   <td class="sc0" style="left:0">
                     <select x-model="row.customerId" @change="onRowCustomerChange(row)" class="ginput">
@@ -192,7 +193,7 @@
                   <td class="sc1" style="left:130px">
                     <select x-model="row.modelId" @change="onRowModelChange(row)" class="ginput">
                       <option value="">— Model —</option>
-                      <template x-for="m in customerModels(row.customerId)" :key="m.id"><option :value="m.id" x-text="m.name"></option></template>
+                      <template x-for="m in modelsForCustomer(row.customerId)" :key="m.id"><option :value="m.id" x-text="m.name"></option></template>
                     </select>
                   </td>
                   <td class="sc2" style="left:260px">
@@ -214,7 +215,7 @@
                     <td :class="showCalc ? 'gcalc' : 'hidden'" x-text="fmtN(rowRevenue(row,mi))"></td>
                     <td :class="showCalc ? 'gcalc' : 'hidden'" x-text="fmtN(rowBomCost(row,mi))"></td>
                     <td :class="showCalc ? 'gcalc' : 'hidden'"
-                        :style="rowGP(row,mi) >= 0 ? 'color:#16a34a' : 'color:#dc2626'"
+                        :style="rowGP(row,mi)>=0?'color:#16a34a':'color:#dc2626'"
                         x-text="fmtN(rowGP(row,mi))"></td>
                   </template>
                   <td class="text-center">
@@ -323,10 +324,9 @@
     </div>
     <div class="p-4">
 
-      <!-- ORG: BU / AccMgr / Customer / Product Line in 4 panels -->
+      <!-- ORG: 4 panels -->
       <div x-show="masterTab==='org'">
         <div class="grid grid-cols-4 gap-4">
-
           <!-- BU -->
           <div class="panel">
             <div class="panel-title">BU</div>
@@ -344,7 +344,6 @@
               <button @click="addBU()" class="px-2 py-1 bg-blue-600 text-white text-xs rounded font-bold">＋</button>
             </div>
           </div>
-
           <!-- Acc Mgr -->
           <div class="panel">
             <div class="panel-title">Acc Mgr</div>
@@ -369,7 +368,6 @@
               <button @click="addAccMgr()" class="px-3 py-1 bg-blue-600 text-white text-xs rounded w-full">新增 Add</button>
             </div>
           </div>
-
           <!-- Customer -->
           <div class="panel">
             <div class="panel-title">Customer</div>
@@ -400,8 +398,7 @@
               <button @click="addCustomer()" class="px-3 py-1 bg-blue-600 text-white text-xs rounded w-full">新增 Add</button>
             </div>
           </div>
-
-          <!-- Product Line (no BU binding) -->
+          <!-- Product Line (no BU) -->
           <div class="panel">
             <div class="panel-title">Product Line</div>
             <div class="overflow-y-auto max-h-64 mb-3">
@@ -418,7 +415,6 @@
               <button @click="addPL()" class="px-2 py-1 bg-blue-600 text-white text-xs rounded font-bold">＋</button>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -460,39 +456,147 @@
         </div>
       </div>
 
-      <!-- MODEL -->
+      <!-- MODEL — 單頭設定 BU/AccMgr/Customer context，單身顯示該 Customer 綁定的 Model -->
       <div x-show="masterTab==='model'">
-        <!-- Header filter -->
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3 flex flex-wrap gap-3 items-end">
-          <span class="text-xs font-semibold text-blue-700">篩選顯示 Filter:</span>
-          <div>
-            <label class="block text-xs text-gray-500 mb-0.5">BU</label>
-            <select x-model="modelFilter.buId" @change="modelFilter.accMgrId=''; modelFilter.customerId=''" class="border rounded px-2 py-1 text-xs">
-              <option value="">All BU</option>
-              <template x-for="b in bus" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
-            </select>
+
+        <!-- 單頭 Header: context selector -->
+        <div class="ctx-box mb-4">
+          <div class="text-xs font-semibold text-blue-700 mb-2">📌 設定綁定對象 Customer Context</div>
+          <div class="flex flex-wrap gap-3 items-end">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">BU</label>
+              <select x-model="modelCtx.buId" @change="modelCtx.accMgrId=''; modelCtx.customerId=''" class="border rounded-lg px-3 py-1.5 text-sm bg-white">
+                <option value="">— 選擇 BU —</option>
+                <template x-for="b in bus" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
+              </select>
+            </div>
+            <span class="ctx-arrow">›</span>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Acc Mgr</label>
+              <select x-model="modelCtx.accMgrId" @change="modelCtx.customerId=''" class="border rounded-lg px-3 py-1.5 text-sm bg-white">
+                <option value="">— 選擇 Acc Mgr —</option>
+                <template x-for="a in (modelCtx.buId ? accMgrs.filter(x=>x.buId===modelCtx.buId) : accMgrs)" :key="a.id">
+                  <option :value="a.id" x-text="a.name"></option>
+                </template>
+              </select>
+            </div>
+            <span class="ctx-arrow">›</span>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Customer *</label>
+              <select x-model="modelCtx.customerId" class="border rounded-lg px-3 py-1.5 text-sm bg-white min-w-[160px]">
+                <option value="">— 選擇 Customer —</option>
+                <template x-for="c in modelCtxCustomers" :key="c.id">
+                  <option :value="c.id" x-text="c.name"></option>
+                </template>
+              </select>
+            </div>
+            <template x-if="modelCtx.customerId">
+              <div class="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium">
+                ✅ <span x-text="nameOf('customers', modelCtx.customerId)"></span>
+                — <span x-text="ctxBindings.length"></span> 個 Model 已綁定
+              </div>
+            </template>
           </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-0.5">Acc Mgr</label>
-            <select x-model="modelFilter.accMgrId" @change="modelFilter.customerId=''" class="border rounded px-2 py-1 text-xs">
-              <option value="">All Acc Mgr</option>
-              <template x-for="a in (modelFilter.buId ? accMgrs.filter(x=>x.buId===modelFilter.buId) : accMgrs)" :key="a.id">
-                <option :value="a.id" x-text="a.name"></option>
-              </template>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs text-gray-500 mb-0.5">Customer</label>
-            <select x-model="modelFilter.customerId" class="border rounded px-2 py-1 text-xs">
-              <option value="">All Customer</option>
-              <template x-for="c in modelFilterCustomers" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
-            </select>
-          </div>
-          <button @click="modelFilter={buId:'',accMgrId:'',customerId:''}" class="text-xs text-gray-400 hover:text-gray-600 mt-4">✕ 清除</button>
-          <span class="text-xs text-blue-500 mt-4" x-show="modelFilter.customerId">（顯示有 Pricing 記錄的 Model）</span>
         </div>
 
-        <!-- Model list -->
+        <!-- 選擇 Customer 後顯示綁定內容 -->
+        <template x-if="modelCtx.customerId">
+          <div>
+            <!-- 單身: 綁定的 Model 列表 -->
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-sm font-semibold text-gray-700">
+                已綁定的 Model
+                <span class="text-xs font-normal text-gray-400 ml-1">(for <span x-text="nameOf('customers',modelCtx.customerId)"></span>)</span>
+              </h3>
+              <button @click="bindAllModels()" class="text-xs px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 font-medium">
+                全部 Model 加入綁定
+              </button>
+            </div>
+
+            <div class="overflow-x-auto mb-4">
+              <table class="w-full text-sm border-collapse">
+                <thead><tr class="bg-gray-50 text-xs text-gray-500 border-b">
+                  <th class="text-left p-2">Model Name</th>
+                  <th class="text-left p-2">Product Line</th>
+                  <th class="text-left p-2">Category2 / Project</th>
+                  <th class="text-left p-2">RD Site</th>
+                  <th class="text-left p-2">MFG Site</th>
+                  <th class="text-left p-2">Category1 (預設)</th>
+                  <th class="p-2 w-12">解除</th>
+                </tr></thead>
+                <tbody>
+                  <template x-for="b in ctxBindings" :key="b.id">
+                    <tr class="border-b hover:bg-gray-50">
+                      <td class="p-2 font-medium" x-text="nameOf('models',b.modelId)"></td>
+                      <td class="p-2 text-xs" x-text="modelPL(b.modelId)"></td>
+                      <td class="p-2 text-xs text-blue-600" x-text="modelCat2(b.modelId)||'—'"></td>
+                      <td class="p-2 text-xs" x-text="modelRD(b.modelId)||'—'"></td>
+                      <td class="p-2 text-xs" x-text="modelMFG(b.modelId)||'—'"></td>
+                      <td class="p-2">
+                        <select x-model="b.category1" @change="saveAll()" class="border rounded px-2 py-0.5 text-xs">
+                          <option value="">—</option>
+                          <template x-for="c1 in cat1List" :key="c1"><option :value="c1" x-text="c1"></option></template>
+                        </select>
+                      </td>
+                      <td class="p-2 text-center">
+                        <button @click="removeBinding(b.id)" class="text-red-400 hover:text-red-600 text-xs">解除</button>
+                      </td>
+                    </tr>
+                  </template>
+                  <template x-if="ctxBindings.length===0">
+                    <tr><td colspan="7" class="py-5 text-center text-gray-400 text-xs">尚未綁定任何 Model</td></tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 新增綁定 -->
+            <div class="border rounded-xl p-4 bg-gray-50">
+              <div class="panel-title mb-3">新增 Model 綁定</div>
+              <div class="flex flex-wrap gap-3 items-end">
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">選擇 Model *</label>
+                  <select x-model="forms.modelBind.modelId" class="border rounded-lg px-3 py-1.5 text-sm bg-white min-w-[200px]">
+                    <option value="">— 選擇 Model —</option>
+                    <template x-for="m in unboundModels" :key="m.id">
+                      <option :value="m.id" x-text="m.name + (m.category2 ? ' ['+m.category2+']' : '')"></option>
+                    </template>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Category1 (預設)</label>
+                  <select x-model="forms.modelBind.category1" class="border rounded-lg px-3 py-1.5 text-sm bg-white">
+                    <option value="">—</option>
+                    <template x-for="c1 in cat1List" :key="c1"><option :value="c1" x-text="c1"></option></template>
+                  </select>
+                </div>
+                <button @click="addBinding()" class="px-4 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 font-medium mt-4">
+                  ＋ 新增綁定
+                </button>
+              </div>
+              <div class="mt-3 text-xs text-gray-400">
+                若所需 Model 不在列表中，請先至 <button @click="masterTab='modelglobal'" class="text-blue-500 hover:underline">全域 Model 清單</button> 新增。
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- 尚未選擇 Customer -->
+        <template x-if="!modelCtx.customerId">
+          <div class="py-10 text-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+            <div class="text-3xl mb-2">👆</div>
+            <div class="text-sm">請先在上方選擇 BU → Acc Mgr → Customer</div>
+            <div class="text-xs mt-1">選定後即可查看及設定該 Customer 的 Model 綁定清單</div>
+          </div>
+        </template>
+
+      </div>
+
+      <!-- GLOBAL MODEL LIST (新增/管理全域 Model 主檔) -->
+      <div x-show="masterTab==='modelglobal'">
+        <div class="mb-3 text-xs text-gray-500 bg-amber-50 border border-amber-200 rounded-lg p-2">
+          💡 在此管理所有 Model 的基本資料（全域），建立後再至 <button @click="masterTab='model'" class="text-blue-500 hover:underline font-medium">Model 綁定</button> 將 Model 與 Customer 綁定。
+        </div>
         <div class="overflow-x-auto mb-4">
           <table class="w-full text-sm border-collapse">
             <thead><tr class="bg-gray-50 text-xs text-gray-500 border-b">
@@ -501,25 +605,25 @@
               <th class="text-left p-2">Category2 / Project</th>
               <th class="text-left p-2">RD Site</th>
               <th class="text-left p-2">MFG Site</th>
+              <th class="text-center p-2">綁定客戶數</th>
               <th class="p-2 w-12">操作</th>
             </tr></thead>
             <tbody>
-              <template x-for="m in filteredModels" :key="m.id">
+              <template x-for="m in models" :key="m.id">
                 <tr class="border-b hover:bg-gray-50">
                   <td class="p-2 font-medium" x-text="m.name"></td>
                   <td class="p-2 text-xs" x-text="nameOf('productLines',m.plId)||'—'"></td>
                   <td class="p-2 text-xs text-blue-600" x-text="m.category2||'—'"></td>
                   <td class="p-2 text-xs" x-text="nameOf('rdSites',m.rdSiteId)||'—'"></td>
                   <td class="p-2 text-xs" x-text="nameOf('mfgSites',m.mfgSiteId)||'—'"></td>
+                  <td class="p-2 text-center text-xs text-blue-600 font-medium" x-text="modelBindingCount(m.id)"></td>
                   <td class="p-2 text-center"><button @click="deleteItem('models',m.id)" class="text-red-400 hover:text-red-600 text-xs">刪除</button></td>
                 </tr>
               </template>
-              <template x-if="filteredModels.length===0"><tr><td colspan="6" class="py-5 text-center text-gray-400 text-xs">尚無資料（或篩選無符合結果）</td></tr></template>
+              <template x-if="models.length===0"><tr><td colspan="7" class="py-5 text-center text-gray-400 text-xs">尚無 Model</td></tr></template>
             </tbody>
           </table>
         </div>
-
-        <!-- Add form -->
         <div class="border rounded-xl p-4 bg-gray-50">
           <div class="panel-title mb-3">新增 Model</div>
           <div class="grid grid-cols-3 gap-3">
@@ -557,25 +661,20 @@
         </div>
       </div>
 
-      <!-- MODEL PRICING (no Category2) -->
+      <!-- MODEL PRICING -->
       <div x-show="masterTab==='pricing'">
         <div class="mb-2 text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-2">
-          💡 設定 Model × Customer 的 ASP / BOM 單價與生效日期。FCST輸入時自動帶入最近有效單價。Category2 請在 Model 設定中管理。
+          💡 設定 Model × Customer 的 ASP / BOM 及各成本單價，附生效日期。FCST輸入時自動帶入最近有效單價。
         </div>
         <div class="overflow-x-auto mb-4">
           <table class="w-full text-sm border-collapse">
             <thead><tr class="bg-gray-50 text-xs text-gray-500 border-b">
-              <th class="text-left p-2">Model</th>
-              <th class="text-left p-2">Customer</th>
+              <th class="text-left p-2">Model</th><th class="text-left p-2">Customer</th>
               <th class="text-left p-2">Category1</th>
-              <th class="text-right p-2">ASP</th>
-              <th class="text-right p-2">BOM</th>
-              <th class="text-right p-2">MFC</th>
-              <th class="text-right p-2">SG&amp;A</th>
-              <th class="text-right p-2">RMA%</th>
-              <th class="text-right p-2">Royalty</th>
-              <th class="text-right p-2">Logistics</th>
-              <th class="text-left p-2">生效日</th>
+              <th class="text-right p-2">ASP</th><th class="text-right p-2">BOM</th>
+              <th class="text-right p-2">MFC</th><th class="text-right p-2">SG&amp;A</th>
+              <th class="text-right p-2">RMA%</th><th class="text-right p-2">Royalty</th>
+              <th class="text-right p-2">Logistics</th><th class="text-left p-2">生效日</th>
               <th class="p-2">操作</th>
             </tr></thead>
             <tbody>
@@ -600,59 +699,48 @@
           </table>
         </div>
         <div class="border rounded-xl p-4 bg-gray-50">
-          <div class="panel-title mb-3">新增定價記錄 Add Pricing Record</div>
+          <div class="panel-title mb-3">新增定價記錄</div>
           <div class="grid grid-cols-3 gap-3">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Model *</label>
+            <div><label class="block text-xs text-gray-500 mb-1">Model *</label>
               <select x-model="forms.pricing.modelId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
                 <option value="">— Model —</option>
                 <template x-for="m in models" :key="m.id"><option :value="m.id" x-text="m.name"></option></template>
               </select>
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Customer (空=全部)</label>
+            <div><label class="block text-xs text-gray-500 mb-1">Customer (空=全部)</label>
               <select x-model="forms.pricing.customerId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
-                <option value="">(All Customers)</option>
+                <option value="">(All)</option>
                 <template x-for="c in customers" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
               </select>
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">生效日 Effective Date *</label>
+            <div><label class="block text-xs text-gray-500 mb-1">生效日 *</label>
               <input type="month" x-model="forms.pricing.effectiveDate" class="border rounded-lg px-3 py-1.5 text-sm w-full">
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Category1</label>
+            <div><label class="block text-xs text-gray-500 mb-1">Category1</label>
               <select x-model="forms.pricing.category1" class="border rounded-lg px-3 py-1.5 text-sm w-full">
                 <option value="">—</option>
                 <template x-for="c1 in cat1List" :key="c1"><option :value="c1" x-text="c1"></option></template>
               </select>
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">ASP</label>
+            <div><label class="block text-xs text-gray-500 mb-1">ASP</label>
               <input type="number" x-model.number="forms.pricing.asp" step="0.01" class="border rounded-lg px-3 py-1.5 text-sm w-full text-right">
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">BOM Cost</label>
+            <div><label class="block text-xs text-gray-500 mb-1">BOM Cost</label>
               <input type="number" x-model.number="forms.pricing.bom" step="0.01" class="border rounded-lg px-3 py-1.5 text-sm w-full text-right">
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">MFC</label>
+            <div><label class="block text-xs text-gray-500 mb-1">MFC</label>
               <input type="number" x-model.number="forms.pricing.mfc" step="0.01" class="border rounded-lg px-3 py-1.5 text-sm w-full text-right">
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">SG&amp;A</label>
+            <div><label class="block text-xs text-gray-500 mb-1">SG&amp;A</label>
               <input type="number" x-model.number="forms.pricing.sga" step="0.01" class="border rounded-lg px-3 py-1.5 text-sm w-full text-right">
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">RMA (%)</label>
+            <div><label class="block text-xs text-gray-500 mb-1">RMA (%)</label>
               <input type="number" x-model.number="forms.pricing.rma" step="0.01" class="border rounded-lg px-3 py-1.5 text-sm w-full text-right">
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Royalty</label>
+            <div><label class="block text-xs text-gray-500 mb-1">Royalty</label>
               <input type="number" x-model.number="forms.pricing.royalty" step="0.01" class="border rounded-lg px-3 py-1.5 text-sm w-full text-right">
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Logistics</label>
+            <div><label class="block text-xs text-gray-500 mb-1">Logistics</label>
               <input type="number" x-model.number="forms.pricing.logistics" step="0.01" class="border rounded-lg px-3 py-1.5 text-sm w-full text-right">
             </div>
           </div>
@@ -660,10 +748,10 @@
         </div>
       </div>
 
-      <!-- CATEGORY1 OPTIONS -->
+      <!-- CATEGORY1 -->
       <div x-show="masterTab==='cat1'">
         <div class="max-w-sm">
-          <div class="text-xs text-gray-500 mb-3">管理 Category1 選項清單（會計入營收分類）</div>
+          <div class="text-xs text-gray-500 mb-3">管理 Category1 選項（Revenue 分類）</div>
           <div class="border rounded-lg overflow-hidden mb-3">
             <template x-for="(c,ci) in cat1List" :key="ci">
               <div class="flex items-center gap-3 px-3 py-2 border-b hover:bg-gray-50">
@@ -696,7 +784,7 @@
     <h3 class="font-bold text-base mb-4" x-text="editingVersion ? '編輯版本' : '新建 FCST 版本'"></h3>
     <div class="space-y-3">
       <div>
-        <label class="block text-xs text-gray-500 mb-1">版本標籤 Label *　<span class="text-gray-400 font-normal">(如: 202606 3M FCST、202605 BP、Actual)</span></label>
+        <label class="block text-xs text-gray-500 mb-1">版本標籤 *　<span class="text-gray-400 font-normal">(如: 202606 3M FCST、202605 BP、Actual)</span></label>
         <input type="text" x-model="vForm.label" placeholder="202606 3M FCST" class="border rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400">
       </div>
       <div class="grid grid-cols-2 gap-3">
@@ -725,7 +813,7 @@
           </div>
         </div>
         <div class="mt-1 text-xs text-blue-600" x-show="vForm.startMonth && vForm.numMonths">
-          涵蓋月份: <span x-text="previewMonths().join(' / ')"></span>
+          涵蓋: <span x-text="previewMonths().join(' / ')"></span>
         </div>
       </div>
       <div>
@@ -743,7 +831,7 @@
 <!-- Load Customer Models Modal -->
 <div x-show="showLoadModal" class="modal-bg" @click.self="showLoadModal=false">
   <div class="modal-box">
-    <h3 class="font-bold text-base mb-4">載入 Customer 模型 Load Customer Models</h3>
+    <h3 class="font-bold text-base mb-4">載入 Customer 模型</h3>
     <div class="mb-3">
       <label class="block text-xs text-gray-500 mb-1">選擇 Customer</label>
       <select x-model="loadForm.customerId" class="border rounded-lg px-3 py-2 text-sm w-full">
@@ -754,29 +842,32 @@
     <template x-if="loadForm.customerId">
       <div class="border rounded-lg overflow-hidden mb-3">
         <div class="bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-500 border-b flex justify-between">
-          <span>符合的 Pricing 記錄</span>
-          <button @click="selectAllPricing()" class="text-blue-500 hover:underline">全選</button>
+          <span>已綁定的 Model（選擇要載入哪些）</span>
+          <button @click="loadSelectAll()" class="text-blue-500 hover:underline">全選</button>
         </div>
-        <template x-for="p in pricingForCustomer(loadForm.customerId)" :key="p.id">
+        <template x-for="b in bindingsForCustomer(loadForm.customerId)" :key="b.id">
           <label class="flex items-center gap-3 px-3 py-2 hover:bg-blue-50 cursor-pointer border-b">
-            <input type="checkbox" :value="p.id" x-model="loadForm.selectedPricing" class="rounded">
+            <input type="checkbox" :value="b.id" x-model="loadForm.selectedBindings" class="rounded">
             <div class="flex-1 text-xs">
-              <span class="font-medium text-gray-800" x-text="nameOf('models',p.modelId)"></span>
-              <span class="text-blue-600 ml-2" x-text="'Cat2: '+(modelCat2(p.modelId)||'—')"></span>
-              <span class="text-gray-400 ml-2" x-text="'Cat1: '+(p.category1||'—')+' | ASP: '+fmtN(p.asp)+' | BOM: '+fmtN(p.bom)"></span>
+              <span class="font-medium text-gray-800" x-text="nameOf('models',b.modelId)"></span>
+              <span class="text-blue-600 ml-2" x-text="'Cat2: '+(modelCat2(b.modelId)||'—')"></span>
+              <span class="text-gray-400 ml-2" x-text="'Cat1: '+(b.category1||'—')"></span>
+              <span class="text-green-600 ml-2" x-text="pricingSummary(b.modelId, loadForm.customerId)"></span>
             </div>
           </label>
         </template>
-        <template x-if="pricingForCustomer(loadForm.customerId).length===0">
-          <div class="py-4 text-center text-gray-400 text-xs">此 Customer 尚無 Pricing 記錄，請先在 Model Pricing 設定。</div>
+        <template x-if="bindingsForCustomer(loadForm.customerId).length===0">
+          <div class="py-4 text-center text-gray-400 text-xs">
+            此 Customer 尚無綁定 Model。請先至「Model 綁定」頁設定。
+          </div>
         </template>
       </div>
     </template>
     <div class="flex justify-end gap-2">
       <button @click="showLoadModal=false" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-50">取消</button>
-      <button @click="loadCustomerModels()" :disabled="!loadForm.customerId||loadForm.selectedPricing.length===0"
+      <button @click="loadCustomerModels()" :disabled="!loadForm.customerId||loadForm.selectedBindings.length===0"
         class="px-5 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium">
-        載入 Load (<span x-text="loadForm.selectedPricing.length"></span>)
+        載入 Load (<span x-text="loadForm.selectedBindings.length"></span>)
       </button>
     </div>
   </div>
@@ -794,7 +885,6 @@
 <script>
 function fcstApp() {
   return {
-    // UI state
     activeTab: 'fcst',
     masterTab: 'org',
     showCalc: false,
@@ -807,55 +897,57 @@ function fcstApp() {
     bus: [],
     accMgrs: [],
     customers: [],
-    productLines: [],   // { id, name }  — no buId
+    productLines: [],
     rdSites: [],
     mfgSites: [],
-    models: [],         // { id, name, plId, category2, rdSiteId, mfgSiteId }
-    pricing: [],        // { id, modelId, customerId, asp, bom, mfc, sga, rma, royalty, logistics, category1, effectiveDate }
+    models: [],           // { id, name, plId, category2, rdSiteId, mfgSiteId }
+    modelBindings: [],    // { id, customerId, modelId, category1 }  ← Customer-Model binding
+    pricing: [],          // { id, modelId, customerId, asp, bom, ... effectiveDate }
     cat1List: ['Revenue', 'NRE', 'Expense', 'Others'],
 
     // Versions & FCST
     versions: [],
     fcstRows: [],
 
-    // Session state
+    // Session
     currentVersionId: '',
     sessionBuId: '',
     sessionAccMgrId: '',
     ff: { customerId: '' },
 
-    // Model tab filter
-    modelFilter: { buId: '', accMgrId: '', customerId: '' },
+    // Model tab context (single header, not filter)
+    modelCtx: { buId: '', accMgrId: '', customerId: '' },
 
     // Forms
     forms: {
-      bu:       { name: '' },
-      accMgr:   { name: '', buId: '' },
-      customer: { name: '', buId: '', accMgrId: '' },
-      pl:       { name: '' },
-      rdSite:   { name: '' },
-      mfgSite:  { name: '' },
-      model:    { name: '', plId: '', category2: '', rdSiteId: '', mfgSiteId: '' },
-      pricing:  { modelId: '', customerId: '', asp: '', bom: '', mfc: '', sga: '', rma: '', royalty: '', logistics: '', category1: '', effectiveDate: '' },
-      cat1:     { name: '' },
+      bu:        { name: '' },
+      accMgr:    { name: '', buId: '' },
+      customer:  { name: '', buId: '', accMgrId: '' },
+      pl:        { name: '' },
+      rdSite:    { name: '' },
+      mfgSite:   { name: '' },
+      model:     { name: '', plId: '', category2: '', rdSiteId: '', mfgSiteId: '' },
+      modelBind: { modelId: '', category1: '' },
+      pricing:   { modelId: '', customerId: '', asp: '', bom: '', mfc: '', sga: '', rma: '', royalty: '', logistics: '', category1: '', effectiveDate: '' },
+      cat1:      { name: '' },
     },
 
     vForm: { label: '', dataType: 'Plan', startMonth: '', numMonths: 3, note: '' },
     editingVersion: null,
-    loadForm: { customerId: '', selectedPricing: [] },
+    loadForm: { customerId: '', selectedBindings: [] },
 
-    // Config
     mainTabs: [
       { key: 'fcst',     label: '📝 FCST 資料輸入' },
       { key: 'versions', label: '📁 版本管理' },
       { key: 'master',   label: '⚙️ 基礎資料 Master Data' },
     ],
     masterTabs: [
-      { key: 'org',     label: '🏢 組織架構 BU / Mgr / Customer / PL' },
-      { key: 'sites',   label: 'Sites (RD / MFG)' },
-      { key: 'model',   label: 'Model' },
-      { key: 'pricing', label: '📊 Model Pricing' },
-      { key: 'cat1',    label: 'Category1 選項' },
+      { key: 'org',         label: '🏢 組織架構 BU/Mgr/Customer/PL' },
+      { key: 'sites',       label: 'Sites (RD/MFG)' },
+      { key: 'model',       label: '🔗 Model 綁定' },
+      { key: 'modelglobal', label: '📦 全域 Model 清單' },
+      { key: 'pricing',     label: '📊 Model Pricing' },
+      { key: 'cat1',        label: 'Category1 選項' },
     ],
     monthCols: [
       { key: 'vol', label: 'Volume' },
@@ -864,7 +956,6 @@ function fcstApp() {
       { key: 'gp',  label: 'Gross Profit' },
     ],
 
-    // ── Init ──
     init() {
       this.load();
       this.$watch('fcstRows', () => this.debouncedSave(), { deep: true });
@@ -876,33 +967,28 @@ function fcstApp() {
       this.saveStatus = '⏳ 待儲存...';
     },
 
-    // ── Computed getters ──
-    get currentVersion() {
-      return this.versions.find(v => v.id === this.currentVersionId) || null;
-    },
+    // ── Computed ──
+    get currentVersion() { return this.versions.find(v => v.id === this.currentVersionId) || null; },
     get currentMonths() {
       if (!this.currentVersion) return [];
       return this.genMonths(this.currentVersion.startMonth, this.currentVersion.numMonths);
     },
-    get currentVersionRowCount() {
-      return this.fcstRows.filter(r => r.versionId === this.currentVersionId).length;
-    },
+    get currentVersionRowCount() { return this.fcstRows.filter(r => r.versionId === this.currentVersionId).length; },
     get displayRows() {
       if (!this.currentVersionId) return [];
       return this.fcstRows.filter(r => {
         if (r.versionId !== this.currentVersionId) return false;
         if (this.ff.customerId && r.customerId !== this.ff.customerId) return false;
         if (this.sessionBuId || this.sessionAccMgrId) {
-          const cust = this.customers.find(c => c.id === r.customerId);
-          if (this.sessionBuId && cust?.buId !== this.sessionBuId) return false;
-          if (this.sessionAccMgrId && cust?.accMgrId !== this.sessionAccMgrId) return false;
+          const c = this.customers.find(x => x.id === r.customerId);
+          if (this.sessionBuId && c?.buId !== this.sessionBuId) return false;
+          if (this.sessionAccMgrId && c?.accMgrId !== this.sessionAccMgrId) return false;
         }
         return true;
       });
     },
     get sessionAccMgrs() {
-      if (!this.sessionBuId) return this.accMgrs;
-      return this.accMgrs.filter(a => a.buId === this.sessionBuId);
+      return this.sessionBuId ? this.accMgrs.filter(a => a.buId === this.sessionBuId) : this.accMgrs;
     },
     get sessionCustomers() {
       return this.customers.filter(c => {
@@ -911,82 +997,112 @@ function fcstApp() {
         return true;
       });
     },
-    get modelFilterCustomers() {
+    // Model tab context customers
+    get modelCtxCustomers() {
       return this.customers.filter(c => {
-        if (this.modelFilter.buId && c.buId !== this.modelFilter.buId) return false;
-        if (this.modelFilter.accMgrId && c.accMgrId !== this.modelFilter.accMgrId) return false;
+        if (this.modelCtx.buId && c.buId !== this.modelCtx.buId) return false;
+        if (this.modelCtx.accMgrId && c.accMgrId !== this.modelCtx.accMgrId) return false;
         return true;
       });
     },
-    get filteredModels() {
-      if (!this.modelFilter.customerId) return this.models;
-      const custId = this.modelFilter.customerId;
-      const modelIds = new Set(
-        this.pricing.filter(p => !p.customerId || p.customerId === custId).map(p => p.modelId)
-      );
-      return this.models.filter(m => modelIds.has(m.id));
+    // Bindings for current context customer
+    get ctxBindings() {
+      if (!this.modelCtx.customerId) return [];
+      return this.modelBindings.filter(b => b.customerId === this.modelCtx.customerId);
+    },
+    // Models not yet bound to current context customer
+    get unboundModels() {
+      const boundIds = new Set(this.ctxBindings.map(b => b.modelId));
+      return this.models.filter(m => !boundIds.has(m.id));
     },
 
     // ── Helpers ──
     uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); },
     genMonths(start, n) {
       if (!start || !n) return [];
-      const months = [];
-      let [y, m] = start.split('-').map(Number);
+      const r = []; let [y, m] = start.split('-').map(Number);
       for (let i = 0; i < n; i++) {
-        months.push(`${y}-${String(m).padStart(2,'0')}`);
+        r.push(`${y}-${String(m).padStart(2,'0')}`);
         m++; if (m > 12) { m = 1; y++; }
       }
-      return months;
+      return r;
     },
-    nameOf(col, id) {
-      if (!id) return '';
-      return this[col]?.find(x => x.id === id)?.name || '';
-    },
+    nameOf(col, id) { if (!id) return ''; return this[col]?.find(x => x.id === id)?.name || ''; },
     fmtN(v) {
       if (v === null || v === undefined || v === '') return '—';
-      const n = Number(v);
-      if (isNaN(n)) return '—';
+      const n = Number(v); if (isNaN(n)) return '—';
       return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     },
     dtBadge(dt) {
-      const m = { 'Plan':'bg-blue-100 text-blue-700', 'Annual Plan':'bg-purple-100 text-purple-700', 'Actual':'bg-green-100 text-green-700' };
-      return m[dt] || 'bg-gray-100 text-gray-600';
+      return { 'Plan':'bg-blue-100 text-blue-700', 'Annual Plan':'bg-purple-100 text-purple-700', 'Actual':'bg-green-100 text-green-700' }[dt] || 'bg-gray-100 text-gray-600';
     },
     cat1Badge(c1) {
-      const m = { 'Revenue':'bg-green-100 text-green-700', 'NRE':'bg-blue-100 text-blue-700', 'Expense':'bg-orange-100 text-orange-700', 'Others':'bg-gray-100 text-gray-600' };
-      return m[c1] || 'bg-gray-100 text-gray-500';
+      return { 'Revenue':'bg-green-100 text-green-700', 'NRE':'bg-blue-100 text-blue-700', 'Expense':'bg-orange-100 text-orange-700', 'Others':'bg-gray-100 text-gray-600' }[c1] || 'bg-gray-100 text-gray-500';
     },
-    showToast(msg, type='ok') {
-      this.toast = { show: true, msg, type };
-      setTimeout(() => this.toast.show = false, 3000);
-    },
+    showToast(msg, type='ok') { this.toast = { show:true, msg, type }; setTimeout(() => this.toast.show=false, 3000); },
 
-    // ── Model / Cat2 helpers ──
-    modelCat2(modelId) {
-      return this.models.find(m => m.id === modelId)?.category2 || '';
-    },
+    // ── Model helpers ──
+    modelCat2(modelId)  { return this.models.find(m => m.id === modelId)?.category2 || ''; },
+    modelPL(modelId)    { const m = this.models.find(x => x.id === modelId); return m ? this.nameOf('productLines', m.plId) : '—'; },
+    modelRD(modelId)    { const m = this.models.find(x => x.id === modelId); return m ? this.nameOf('rdSites', m.rdSiteId) : ''; },
+    modelMFG(modelId)   { const m = this.models.find(x => x.id === modelId); return m ? this.nameOf('mfgSites', m.mfgSiteId) : ''; },
+    modelBindingCount(modelId) { return this.modelBindings.filter(b => b.modelId === modelId).length; },
+
     modelCat2Options(modelId) {
-      // Primary cat2 from model master, plus any additional cat2 already used for this model
       const opts = new Set();
       const m = this.models.find(x => x.id === modelId);
       if (m?.category2) opts.add(m.category2);
       this.fcstRows.filter(r => r.modelId === modelId && r.category2).forEach(r => opts.add(r.category2));
       return [...opts];
     },
-    customerModels(customerId) {
+
+    // Models available for a customer (from modelBindings; fallback to all if none bound)
+    modelsForCustomer(customerId) {
       if (!customerId) return this.models;
-      const modelIds = new Set(
-        this.pricing.filter(p => !p.customerId || p.customerId === customerId).map(p => p.modelId)
-      );
-      return modelIds.size ? this.models.filter(m => modelIds.has(m.id)) : this.models;
+      const bindings = this.modelBindings.filter(b => b.customerId === customerId);
+      if (!bindings.length) return this.models;
+      return bindings.map(b => this.models.find(m => m.id === b.modelId)).filter(Boolean);
     },
-    pricingForCustomer(customerId) {
-      return this.pricing.filter(p => !p.customerId || p.customerId === customerId);
+
+    bindingsForCustomer(customerId) {
+      return this.modelBindings.filter(b => b.customerId === customerId);
     },
-    selectAllPricing() {
-      const opts = this.pricingForCustomer(this.loadForm.customerId);
-      this.loadForm.selectedPricing = opts.map(p => p.id);
+
+    pricingSummary(modelId, customerId) {
+      const p = this.getPricing(modelId, customerId, '');
+      if (!p) return '';
+      return `ASP: ${this.fmtN(p.asp)} | BOM: ${this.fmtN(p.bom)}`;
+    },
+
+    // ── Model bindings ops ──
+    addBinding() {
+      if (!this.modelCtx.customerId || !this.forms.modelBind.modelId) {
+        this.showToast('請先選擇 Customer 及 Model', 'error'); return;
+      }
+      const exists = this.modelBindings.find(b => b.customerId === this.modelCtx.customerId && b.modelId === this.forms.modelBind.modelId);
+      if (exists) { this.showToast('此 Model 已綁定', 'error'); return; }
+      this.modelBindings.push({
+        id: this.uid(),
+        customerId: this.modelCtx.customerId,
+        modelId: this.forms.modelBind.modelId,
+        category1: this.forms.modelBind.category1,
+      });
+      this.forms.modelBind = { modelId: '', category1: '' };
+      this.saveAll(); this.showToast('綁定已新增');
+    },
+    removeBinding(id) {
+      this.modelBindings = this.modelBindings.filter(b => b.id !== id);
+      this.saveAll(); this.showToast('綁定已解除');
+    },
+    bindAllModels() {
+      if (!this.modelCtx.customerId) return;
+      let added = 0;
+      for (const m of this.unboundModels) {
+        this.modelBindings.push({ id: this.uid(), customerId: this.modelCtx.customerId, modelId: m.id, category1: '' });
+        added++;
+      }
+      if (added) { this.saveAll(); this.showToast(`已綁定 ${added} 個 Model`); }
+      else this.showToast('所有 Model 均已綁定');
     },
 
     // ── Pricing lookup ──
@@ -1017,350 +1133,217 @@ function fcstApp() {
       const p = this.getPricing(row.modelId, row.customerId, this.currentMonths[mi]);
       return vol * (Number(p?.bom) || 0);
     },
-    rowGP(row, mi) {
-      return this.rowRevenue(row, mi) - this.rowBomCost(row, mi);
-    },
+    rowGP(row, mi) { return this.rowRevenue(row, mi) - this.rowBomCost(row, mi); },
     colSum(type, mi) {
       return this.displayRows.reduce((s, r) => {
-        if (type === 'vol') return s + (Number(r.volumes[mi]) || 0);
-        if (type === 'rev') return s + this.rowRevenue(r, mi);
-        if (type === 'bom') return s + this.rowBomCost(r, mi);
-        if (type === 'gp')  return s + this.rowGP(r, mi);
+        if (type==='vol') return s + (Number(r.volumes[mi])||0);
+        if (type==='rev') return s + this.rowRevenue(r, mi);
+        if (type==='bom') return s + this.rowBomCost(r, mi);
+        if (type==='gp')  return s + this.rowGP(r, mi);
         return s;
       }, 0);
     },
 
-    // ── FCST row operations ──
+    // ── FCST row ops ──
     addEmptyRow() {
       if (!this.currentVersionId) return;
-      this.fcstRows.push({
-        id: this.uid(),
-        versionId: this.currentVersionId,
-        customerId: this.ff.customerId || '',
-        modelId: '',
-        category1: '',
-        category2: '',
-        volumes: new Array(this.currentMonths.length).fill(null),
-      });
+      this.fcstRows.push({ id:this.uid(), versionId:this.currentVersionId, customerId:this.ff.customerId||'', modelId:'', category1:'', category2:'', volumes:new Array(this.currentMonths.length).fill(null) });
     },
     duplicateRow(row) {
-      const nr = JSON.parse(JSON.stringify(row));
-      nr.id = this.uid();
+      const nr = JSON.parse(JSON.stringify(row)); nr.id = this.uid();
       const idx = this.fcstRows.findIndex(r => r.id === row.id);
-      this.fcstRows.splice(idx + 1, 0, nr);
+      this.fcstRows.splice(idx+1, 0, nr);
     },
-    deleteRow(id) {
-      this.fcstRows = this.fcstRows.filter(r => r.id !== id);
-    },
-    onRowCustomerChange(row) {
-      row.modelId = '';
-      row.category2 = '';
-    },
+    deleteRow(id) { this.fcstRows = this.fcstRows.filter(r => r.id !== id); },
+    onRowCustomerChange(row) { row.modelId = ''; row.category2 = ''; },
     onRowModelChange(row) {
-      // Auto-fill Cat2 from model master
       const m = this.models.find(x => x.id === row.modelId);
       if (m?.category2) row.category2 = m.category2;
-      // Auto-fill Cat1 from pricing
-      const month = this.currentMonths[0] || '';
-      const p = this.getPricing(row.modelId, row.customerId, month);
-      if (p?.category1 && !row.category1) row.category1 = p.category1;
+      // Auto-fill category1 from binding
+      const binding = this.modelBindings.find(b => b.customerId === row.customerId && b.modelId === row.modelId);
+      if (binding?.category1 && !row.category1) row.category1 = binding.category1;
+    },
+
+    // Load Customer Models modal
+    openLoadModelsModal() { this.loadForm = { customerId: this.ff.customerId||'', selectedBindings: [] }; this.showLoadModal = true; },
+    loadSelectAll() {
+      this.loadForm.selectedBindings = this.bindingsForCustomer(this.loadForm.customerId).map(b => b.id);
     },
     loadCustomerModels() {
       if (!this.loadForm.customerId || !this.currentVersionId) return;
       const n = this.currentMonths.length;
       let added = 0;
-      for (const pId of this.loadForm.selectedPricing) {
-        const p = this.pricing.find(x => x.id === pId);
-        if (!p) continue;
-        const m = this.models.find(x => x.id === p.modelId);
-        this.fcstRows.push({
-          id: this.uid(),
-          versionId: this.currentVersionId,
-          customerId: this.loadForm.customerId,
-          modelId: p.modelId,
-          category1: p.category1 || '',
-          category2: m?.category2 || '',
-          volumes: new Array(n).fill(null),
-        });
+      for (const bId of this.loadForm.selectedBindings) {
+        const b = this.modelBindings.find(x => x.id === bId); if (!b) continue;
+        const m = this.models.find(x => x.id === b.modelId);
+        this.fcstRows.push({ id:this.uid(), versionId:this.currentVersionId, customerId:this.loadForm.customerId, modelId:b.modelId, category1:b.category1||'', category2:m?.category2||'', volumes:new Array(n).fill(null) });
         added++;
       }
       this.showLoadModal = false;
-      this.loadForm = { customerId: '', selectedPricing: [] };
+      this.loadForm = { customerId:'', selectedBindings:[] };
       this.showToast(`已新增 ${added} 行`);
     },
-    openLoadModelsModal() {
-      this.loadForm = { customerId: this.ff.customerId || '', selectedPricing: [] };
-      this.showLoadModal = true;
-    },
 
-    // ── Version operations ──
+    // ── Version ops ──
     onVersionChange() {
       if (this.currentVersion) {
         const n = this.currentVersion.numMonths;
-        this.fcstRows.filter(r => r.versionId === this.currentVersionId).forEach(r => {
-          while (r.volumes.length < n) r.volumes.push(null);
-        });
+        this.fcstRows.filter(r => r.versionId === this.currentVersionId).forEach(r => { while (r.volumes.length < n) r.volumes.push(null); });
       }
     },
     openNewVersionModal() {
       this.editingVersion = null;
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      this.vForm = { label: `${y}${m} 3M FCST`, dataType: 'Plan', startMonth: `${y}-${m}`, numMonths: 3, note: '' };
+      const now = new Date(); const y = now.getFullYear(); const m = String(now.getMonth()+1).padStart(2,'0');
+      this.vForm = { label:`${y}${m} 3M FCST`, dataType:'Plan', startMonth:`${y}-${m}`, numMonths:3, note:'' };
       this.showVersionModal = true;
     },
     openEditVersionModal(v) {
       this.editingVersion = v;
-      this.vForm = { label: v.label, dataType: v.dataType, startMonth: v.startMonth, numMonths: v.numMonths, note: v.note || '' };
+      this.vForm = { label:v.label, dataType:v.dataType, startMonth:v.startMonth, numMonths:v.numMonths, note:v.note||'' };
       this.showVersionModal = true;
     },
     onVFormTypeChange() {
-      if (this.vForm.dataType === 'Actual') this.vForm.numMonths = 1;
-      else if (this.vForm.dataType === 'Annual Plan') this.vForm.numMonths = 12;
-      else this.vForm.numMonths = 3;
+      if (this.vForm.dataType==='Actual') this.vForm.numMonths=1;
+      else if (this.vForm.dataType==='Annual Plan') this.vForm.numMonths=12;
+      else this.vForm.numMonths=3;
     },
     previewMonths() { return this.genMonths(this.vForm.startMonth, this.vForm.numMonths); },
     saveVersion() {
-      if (!this.vForm.label.trim()) { this.showToast('請輸入版本標籤', 'error'); return; }
-      if (!this.vForm.startMonth) { this.showToast('請選擇起始月份', 'error'); return; }
+      if (!this.vForm.label.trim()) { this.showToast('請輸入版本標籤','error'); return; }
+      if (!this.vForm.startMonth) { this.showToast('請選擇起始月份','error'); return; }
       if (this.editingVersion) {
-        Object.assign(this.editingVersion, {
-          label: this.vForm.label.trim(), dataType: this.vForm.dataType,
-          startMonth: this.vForm.startMonth, numMonths: Number(this.vForm.numMonths), note: this.vForm.note,
-        });
+        Object.assign(this.editingVersion, { label:this.vForm.label.trim(), dataType:this.vForm.dataType, startMonth:this.vForm.startMonth, numMonths:Number(this.vForm.numMonths), note:this.vForm.note });
       } else {
-        const v = {
-          id: this.uid(), label: this.vForm.label.trim(), dataType: this.vForm.dataType,
-          startMonth: this.vForm.startMonth, numMonths: Number(this.vForm.numMonths),
-          note: this.vForm.note, createdAt: new Date().toLocaleString('zh-TW'),
-        };
-        this.versions.push(v);
-        this.currentVersionId = v.id;
-        this.activeTab = 'fcst';
+        const v = { id:this.uid(), label:this.vForm.label.trim(), dataType:this.vForm.dataType, startMonth:this.vForm.startMonth, numMonths:Number(this.vForm.numMonths), note:this.vForm.note, createdAt:new Date().toLocaleString('zh-TW') };
+        this.versions.push(v); this.currentVersionId=v.id; this.activeTab='fcst';
       }
-      this.showVersionModal = false;
-      this.saveAll();
-      this.showToast('版本已儲存');
+      this.showVersionModal=false; this.saveAll(); this.showToast('版本已儲存');
     },
     deleteVersion(id) {
       if (!confirm('確定刪除此版本及所有資料？')) return;
-      this.versions = this.versions.filter(v => v.id !== id);
-      this.fcstRows = this.fcstRows.filter(r => r.versionId !== id);
-      if (this.currentVersionId === id) this.currentVersionId = '';
-      this.saveAll();
-      this.showToast('已刪除');
+      this.versions=this.versions.filter(v=>v.id!==id);
+      this.fcstRows=this.fcstRows.filter(r=>r.versionId!==id);
+      if (this.currentVersionId===id) this.currentVersionId='';
+      this.saveAll(); this.showToast('已刪除');
     },
-    switchToVersion(id) { this.currentVersionId = id; this.activeTab = 'fcst'; this.onVersionChange(); },
-    getRowCount(vId) { return this.fcstRows.filter(r => r.versionId === vId).length; },
+    switchToVersion(id) { this.currentVersionId=id; this.activeTab='fcst'; this.onVersionChange(); },
+    getRowCount(vId) { return this.fcstRows.filter(r=>r.versionId===vId).length; },
 
-    // ── Master data operations ──
-    addBU() {
-      if (!this.forms.bu.name.trim()) return;
-      this.bus.push({ id: this.uid(), name: this.forms.bu.name.trim() });
-      this.forms.bu.name = ''; this.saveAll();
-    },
-    addAccMgr() {
-      if (!this.forms.accMgr.name.trim()) return;
-      this.accMgrs.push({ id: this.uid(), name: this.forms.accMgr.name.trim(), buId: this.forms.accMgr.buId });
-      this.forms.accMgr.name = ''; this.saveAll();
-    },
-    addCustomer() {
-      if (!this.forms.customer.name.trim()) return;
-      this.customers.push({ id: this.uid(), name: this.forms.customer.name.trim(), buId: this.forms.customer.buId, accMgrId: this.forms.customer.accMgrId });
-      this.forms.customer.name = ''; this.saveAll();
-    },
-    addPL() {
-      if (!this.forms.pl.name.trim()) return;
-      this.productLines.push({ id: this.uid(), name: this.forms.pl.name.trim() });
-      this.forms.pl.name = ''; this.saveAll();
-    },
+    // ── Master data ops ──
+    addBU()       { if (!this.forms.bu.name.trim()) return; this.bus.push({id:this.uid(),name:this.forms.bu.name.trim()}); this.forms.bu.name=''; this.saveAll(); },
+    addAccMgr()   { if (!this.forms.accMgr.name.trim()) return; this.accMgrs.push({id:this.uid(),name:this.forms.accMgr.name.trim(),buId:this.forms.accMgr.buId}); this.forms.accMgr.name=''; this.saveAll(); },
+    addCustomer() { if (!this.forms.customer.name.trim()) return; this.customers.push({id:this.uid(),name:this.forms.customer.name.trim(),buId:this.forms.customer.buId,accMgrId:this.forms.customer.accMgrId}); this.forms.customer.name=''; this.saveAll(); },
+    addPL()       { if (!this.forms.pl.name.trim()) return; this.productLines.push({id:this.uid(),name:this.forms.pl.name.trim()}); this.forms.pl.name=''; this.saveAll(); },
     addSite(type) {
-      if (type === 'rd') {
-        if (!this.forms.rdSite.name.trim()) return;
-        this.rdSites.push({ id: this.uid(), name: this.forms.rdSite.name.trim() });
-        this.forms.rdSite.name = '';
-      } else {
-        if (!this.forms.mfgSite.name.trim()) return;
-        this.mfgSites.push({ id: this.uid(), name: this.forms.mfgSite.name.trim() });
-        this.forms.mfgSite.name = '';
-      }
+      if (type==='rd') { if (!this.forms.rdSite.name.trim()) return; this.rdSites.push({id:this.uid(),name:this.forms.rdSite.name.trim()}); this.forms.rdSite.name=''; }
+      else { if (!this.forms.mfgSite.name.trim()) return; this.mfgSites.push({id:this.uid(),name:this.forms.mfgSite.name.trim()}); this.forms.mfgSite.name=''; }
       this.saveAll();
     },
     addModel() {
       if (!this.forms.model.name.trim()) return;
-      this.models.push({
-        id: this.uid(), name: this.forms.model.name.trim(),
-        plId: this.forms.model.plId, category2: this.forms.model.category2,
-        rdSiteId: this.forms.model.rdSiteId, mfgSiteId: this.forms.model.mfgSiteId,
-      });
-      this.forms.model.name = ''; this.forms.model.category2 = '';
-      this.saveAll();
+      this.models.push({id:this.uid(),name:this.forms.model.name.trim(),plId:this.forms.model.plId,category2:this.forms.model.category2,rdSiteId:this.forms.model.rdSiteId,mfgSiteId:this.forms.model.mfgSiteId});
+      this.forms.model.name=''; this.forms.model.category2=''; this.saveAll();
     },
     addPricing() {
-      if (!this.forms.pricing.modelId) { this.showToast('請選擇 Model', 'error'); return; }
-      if (!this.forms.pricing.effectiveDate) { this.showToast('請選擇生效日', 'error'); return; }
-      this.pricing.push({
-        id: this.uid(),
-        modelId: this.forms.pricing.modelId,
-        customerId: this.forms.pricing.customerId || '',
-        category1: this.forms.pricing.category1,
-        asp: this.forms.pricing.asp,
-        bom: this.forms.pricing.bom,
-        mfc: this.forms.pricing.mfc,
-        sga: this.forms.pricing.sga,
-        rma: this.forms.pricing.rma,
-        royalty: this.forms.pricing.royalty,
-        logistics: this.forms.pricing.logistics,
-        effectiveDate: this.forms.pricing.effectiveDate,
-      });
-      this.forms.pricing = { modelId: '', customerId: '', asp: '', bom: '', mfc: '', sga: '', rma: '', royalty: '', logistics: '', category1: '', effectiveDate: '' };
+      if (!this.forms.pricing.modelId) { this.showToast('請選擇 Model','error'); return; }
+      if (!this.forms.pricing.effectiveDate) { this.showToast('請選擇生效日','error'); return; }
+      this.pricing.push({id:this.uid(),modelId:this.forms.pricing.modelId,customerId:this.forms.pricing.customerId||'',category1:this.forms.pricing.category1,asp:this.forms.pricing.asp,bom:this.forms.pricing.bom,mfc:this.forms.pricing.mfc,sga:this.forms.pricing.sga,rma:this.forms.pricing.rma,royalty:this.forms.pricing.royalty,logistics:this.forms.pricing.logistics,effectiveDate:this.forms.pricing.effectiveDate});
+      this.forms.pricing={modelId:'',customerId:'',asp:'',bom:'',mfc:'',sga:'',rma:'',royalty:'',logistics:'',category1:'',effectiveDate:''};
       this.saveAll(); this.showToast('定價記錄已新增');
     },
     addCat1() {
       if (!this.forms.cat1.name.trim()) return;
-      if (!this.cat1List.includes(this.forms.cat1.name.trim())) {
-        this.cat1List.push(this.forms.cat1.name.trim()); this.saveAll();
-      }
-      this.forms.cat1.name = '';
+      if (!this.cat1List.includes(this.forms.cat1.name.trim())) { this.cat1List.push(this.forms.cat1.name.trim()); this.saveAll(); }
+      this.forms.cat1.name='';
     },
-    deleteItem(col, id) {
-      this[col] = this[col].filter(x => x.id !== id); this.saveAll();
-    },
+    deleteItem(col, id) { this[col]=this[col].filter(x=>x.id!==id); this.saveAll(); },
 
     // ── Persistence ──
     saveAll() {
-      localStorage.setItem('fcst_v2', JSON.stringify({
-        bus: this.bus, accMgrs: this.accMgrs, customers: this.customers,
-        productLines: this.productLines, rdSites: this.rdSites, mfgSites: this.mfgSites,
-        models: this.models, pricing: this.pricing, cat1List: this.cat1List,
-        versions: this.versions, fcstRows: this.fcstRows,
+      localStorage.setItem('fcst_v3', JSON.stringify({
+        bus:this.bus, accMgrs:this.accMgrs, customers:this.customers,
+        productLines:this.productLines, rdSites:this.rdSites, mfgSites:this.mfgSites,
+        models:this.models, modelBindings:this.modelBindings, pricing:this.pricing,
+        cat1List:this.cat1List, versions:this.versions, fcstRows:this.fcstRows,
       }));
       this.saveStatus = '✅ 已儲存 ' + new Date().toLocaleTimeString('zh-TW');
     },
     load() {
       try {
-        // Try new key first, fall back to old
-        const raw = localStorage.getItem('fcst_v2') || localStorage.getItem('fcst_data_v2') || localStorage.getItem('fcst_data');
+        const raw = localStorage.getItem('fcst_v3') || localStorage.getItem('fcst_v2') || localStorage.getItem('fcst_data');
         if (!raw) return;
         const d = JSON.parse(raw);
-        this.bus = d.bus || [];
-        this.accMgrs = d.accMgrs || [];
-        this.customers = d.customers || [];
-        // Strip buId from productLines if present (migration)
-        this.productLines = (d.productLines || []).map(p => ({ id: p.id, name: p.name }));
-        this.rdSites = d.rdSites || [];
-        this.mfgSites = d.mfgSites || [];
-        // Ensure models have category2 field
-        this.models = (d.models || []).map(m => ({ ...m, category2: m.category2 || '' }));
-        // Strip category2 from pricing if present (migration)
-        this.pricing = (d.pricing || []).map(({ category2, ...rest }) => rest);
-        this.cat1List = d.cat1List || ['Revenue', 'NRE', 'Expense', 'Others'];
-        this.versions = d.versions || [];
-        this.fcstRows = d.fcstRows || [];
+        this.bus = d.bus||[]; this.accMgrs = d.accMgrs||[]; this.customers = d.customers||[];
+        this.productLines = (d.productLines||[]).map(p => ({id:p.id, name:p.name}));
+        this.rdSites = d.rdSites||[]; this.mfgSites = d.mfgSites||[];
+        this.models = (d.models||[]).map(m => ({...m, category2:m.category2||''}));
+        this.modelBindings = d.modelBindings||[];
+        this.pricing = (d.pricing||[]).map(({category2,...rest}) => rest);
+        this.cat1List = d.cat1List||['Revenue','NRE','Expense','Others'];
+        this.versions = d.versions||[]; this.fcstRows = d.fcstRows||[];
       } catch(e) { console.error('Load error:', e); }
     },
     exportBackup() {
-      const data = {
-        _v: 2, _at: new Date().toISOString(),
-        bus: this.bus, accMgrs: this.accMgrs, customers: this.customers,
-        productLines: this.productLines, rdSites: this.rdSites, mfgSites: this.mfgSites,
-        models: this.models, pricing: this.pricing, cat1List: this.cat1List,
-        versions: this.versions, fcstRows: this.fcstRows,
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `fcst_backup_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
+      const blob = new Blob([JSON.stringify({_v:3,_at:new Date().toISOString(),bus:this.bus,accMgrs:this.accMgrs,customers:this.customers,productLines:this.productLines,rdSites:this.rdSites,mfgSites:this.mfgSites,models:this.models,modelBindings:this.modelBindings,pricing:this.pricing,cat1List:this.cat1List,versions:this.versions,fcstRows:this.fcstRows},null,2)],{type:'application/json'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      a.download=`fcst_backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
       this.showToast('備份已匯出');
     },
     importBackup(event) {
-      const file = event.target.files[0]; if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
+      const file=event.target.files[0]; if (!file) return;
+      const reader=new FileReader();
+      reader.onload=(e) => {
         try {
-          const d = JSON.parse(e.target.result);
-          if (!confirm(`確定匯入備份？\n匯出時間: ${d._at||'未知'}\n（合併至現有資料，ID 相同者不重複匯入）`)) return;
-          const merge = (local, incoming) => {
-            const ids = new Set(local.map(x => x.id));
-            return [...local, ...(incoming || []).filter(x => !ids.has(x.id))];
-          };
-          this.bus = merge(this.bus, d.bus);
-          this.accMgrs = merge(this.accMgrs, d.accMgrs);
-          this.customers = merge(this.customers, d.customers);
-          this.productLines = merge(this.productLines, d.productLines);
-          this.rdSites = merge(this.rdSites, d.rdSites);
-          this.mfgSites = merge(this.mfgSites, d.mfgSites);
-          this.models = merge(this.models, d.models);
-          this.pricing = merge(this.pricing, d.pricing);
-          this.versions = merge(this.versions, d.versions);
-          this.fcstRows = merge(this.fcstRows, d.fcstRows);
-          if (d.cat1List) this.cat1List = [...new Set([...this.cat1List, ...d.cat1List])];
+          const d=JSON.parse(e.target.result);
+          if (!confirm(`確定匯入備份？\n匯出時間: ${d._at||'未知'}\n（合併，ID 相同不重複）`)) return;
+          const merge=(local,incoming) => { const ids=new Set(local.map(x=>x.id)); return [...local,...(incoming||[]).filter(x=>!ids.has(x.id))]; };
+          this.bus=merge(this.bus,d.bus); this.accMgrs=merge(this.accMgrs,d.accMgrs);
+          this.customers=merge(this.customers,d.customers); this.productLines=merge(this.productLines,d.productLines);
+          this.rdSites=merge(this.rdSites,d.rdSites); this.mfgSites=merge(this.mfgSites,d.mfgSites);
+          this.models=merge(this.models,d.models); this.modelBindings=merge(this.modelBindings,d.modelBindings||[]);
+          this.pricing=merge(this.pricing,d.pricing); this.versions=merge(this.versions,d.versions);
+          this.fcstRows=merge(this.fcstRows,d.fcstRows);
+          if (d.cat1List) this.cat1List=[...new Set([...this.cat1List,...d.cat1List])];
           this.saveAll(); this.showToast('備份已匯入合併');
-        } catch { this.showToast('匯入失敗：格式錯誤', 'error'); }
-        event.target.value = '';
+        } catch { this.showToast('匯入失敗','error'); }
+        event.target.value='';
       };
       reader.readAsText(file);
     },
 
     // ── Excel export ──
-    exportCurrentVersionExcel() {
-      if (this.currentVersionId) this.exportVersionExcel(this.currentVersionId);
-    },
+    exportCurrentVersionExcel() { if (this.currentVersionId) this.exportVersionExcel(this.currentVersionId); },
     exportVersionExcel(vId) {
-      const v = this.versions.find(x => x.id === vId); if (!v) return;
-      const months = this.genMonths(v.startMonth, v.numMonths);
-      const rows = this.fcstRows.filter(r => r.versionId === vId);
-
-      const fixedHdr = ['FCST Version', 'BU', 'Acc Mgr', 'Customer', 'Model', 'Product Line', 'Category2', 'RD Site', 'MFG Site', 'Category1'];
-      const h1 = [...fixedHdr];
-      const h2 = [...fixedHdr];
-      for (const m of months) {
-        h1.push(m, '', '', '');
-        h2.push('Volume', 'Revenue', 'BOM Cost', 'Gross Profit');
-      }
-
-      const wsData = [h1, h2];
+      const v=this.versions.find(x=>x.id===vId); if (!v) return;
+      const months=this.genMonths(v.startMonth,v.numMonths);
+      const rows=this.fcstRows.filter(r=>r.versionId===vId);
+      const fh=['FCST Version','BU','Acc Mgr','Customer','Model','Product Line','Category2','RD Site','MFG Site','Category1'];
+      const h1=[...fh], h2=[...fh];
+      for (const m of months) { h1.push(m,'','',''); h2.push('Volume','Revenue','BOM Cost','Gross Profit'); }
+      const wsData=[h1,h2];
       for (const row of rows) {
-        const cust  = this.customers.find(c => c.id === row.customerId);
-        const model = this.models.find(m => m.id === row.modelId);
-        const pl    = model ? this.productLines.find(p => p.id === model.plId) : null;
-        const accMgr = cust ? this.accMgrs.find(a => a.id === cust.accMgrId) : null;
-        const bu    = cust ? this.bus.find(b => b.id === cust.buId) : null;
-        const rd    = model ? this.rdSites.find(s => s.id === model.rdSiteId) : null;
-        const mfg   = model ? this.mfgSites.find(s => s.id === model.mfgSiteId) : null;
-
-        const dr = [
-          v.label, bu?.name || '', accMgr?.name || '', cust?.name || '',
-          model?.name || '', pl?.name || '',
-          model?.category2 || row.category2 || '',
-          rd?.name || '', mfg?.name || '', row.category1 || '',
-        ];
-
-        months.forEach((m, mi) => {
-          const vol = Number(row.volumes[mi]) || 0;
-          const p = this.getPricing(row.modelId, row.customerId, m);
-          const asp = Number(p?.asp) || 0;
-          const bom = Number(p?.bom) || 0;
-          dr.push(vol, vol * asp, vol * bom, vol * (asp - bom));
+        const cust=this.customers.find(c=>c.id===row.customerId);
+        const model=this.models.find(m=>m.id===row.modelId);
+        const pl=model?this.productLines.find(p=>p.id===model.plId):null;
+        const accMgr=cust?this.accMgrs.find(a=>a.id===cust.accMgrId):null;
+        const bu=cust?this.bus.find(b=>b.id===cust.buId):null;
+        const rd=model?this.rdSites.find(s=>s.id===model.rdSiteId):null;
+        const mfg=model?this.mfgSites.find(s=>s.id===model.mfgSiteId):null;
+        const dr=[v.label,bu?.name||'',accMgr?.name||'',cust?.name||'',model?.name||'',pl?.name||'',model?.category2||row.category2||'',rd?.name||'',mfg?.name||'',row.category1||''];
+        months.forEach((m,mi) => {
+          const vol=Number(row.volumes[mi])||0;
+          const p=this.getPricing(row.modelId,row.customerId,m);
+          const asp=Number(p?.asp)||0, bom=Number(p?.bom)||0;
+          dr.push(vol,vol*asp,vol*bom,vol*(asp-bom));
         });
         wsData.push(dr);
       }
-
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      if (!ws['!merges']) ws['!merges'] = [];
-      months.forEach((m, mi) => {
-        const s = fixedHdr.length + mi * 4;
-        ws['!merges'].push({ s: { r: 0, c: s }, e: { r: 0, c: s + 3 } });
-      });
-      ws['!cols'] = [
-        ...fixedHdr.map(() => ({ wch: 14 })),
-        ...months.flatMap(() => [{ wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 }]),
-      ];
-      XLSX.utils.book_append_sheet(wb, ws, v.label.slice(0, 31));
-      XLSX.writeFile(wb, `FCST_${v.label.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet(wsData);
+      if (!ws['!merges']) ws['!merges']=[];
+      months.forEach((_,mi) => { const s=fh.length+mi*4; ws['!merges'].push({s:{r:0,c:s},e:{r:0,c:s+3}}); });
+      ws['!cols']=[...fh.map(()=>({wch:14})),...months.flatMap(()=>[{wch:10},{wch:12},{wch:12},{wch:12}])];
+      XLSX.utils.book_append_sheet(wb,ws,v.label.slice(0,31));
+      XLSX.writeFile(wb,`FCST_${v.label.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
       this.showToast('Excel 已匯出');
     },
   };
