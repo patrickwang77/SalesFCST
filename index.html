@@ -709,16 +709,18 @@
         <div class="border rounded-xl p-4 bg-gray-50">
           <div class="panel-title mb-3">新增定價記錄</div>
           <div class="grid grid-cols-3 gap-3">
-            <div><label class="block text-xs text-gray-500 mb-1">Model *</label>
-              <select x-model="forms.pricing.modelId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
-                <option value="">— Model —</option>
-                <template x-for="m in models" :key="m.id"><option :value="m.id" x-text="m.name"></option></template>
+            <div><label class="block text-xs text-gray-500 mb-1">Customer *</label>
+              <select x-model="forms.pricing.customerId" @change="forms.pricing.modelId=''" class="border rounded-lg px-3 py-1.5 text-sm w-full">
+                <option value="">— Customer —</option>
+                <template x-for="c in customers" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
               </select>
             </div>
-            <div><label class="block text-xs text-gray-500 mb-1">Customer (空=全部)</label>
-              <select x-model="forms.pricing.customerId" class="border rounded-lg px-3 py-1.5 text-sm w-full">
-                <option value="">(All)</option>
-                <template x-for="c in customers" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
+            <div><label class="block text-xs text-gray-500 mb-1">Model *
+              <span class="text-gray-400 font-normal ml-1" x-show="!forms.pricing.customerId">（請先選 Customer）</span>
+            </label>
+              <select x-model="forms.pricing.modelId" :disabled="!forms.pricing.customerId" class="border rounded-lg px-3 py-1.5 text-sm w-full disabled:opacity-50">
+                <option value="">— Model —</option>
+                <template x-for="m in modelsForCustomer(forms.pricing.customerId)" :key="m.id"><option :value="m.id" x-text="m.name"></option></template>
               </select>
             </div>
             <div><label class="block text-xs text-gray-500 mb-1">生效日 *</label>
