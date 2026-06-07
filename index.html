@@ -39,6 +39,8 @@
   .gtable tfoot .sc0{background:#dbeafe}
 
   .tscroll{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 340px)}
+  .fcst-table .calc-col{display:none}
+  .fcst-table.show-calc .calc-col{display:table-cell}
 
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center}
   .modal-box{background:white;border-radius:10px;padding:24px;min-width:460px;max-width:660px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
@@ -156,7 +158,7 @@
       <!-- FCST Grid -->
       <div class="bg-white rounded-xl border shadow-sm">
         <div class="tscroll">
-          <table class="gtable w-full">
+          <table class="gtable w-full fcst-table" :class="showCalc ? 'show-calc' : ''">
             <thead>
               <tr>
                 <th class="sc0 text-left" style="min-width:130px;left:0">Customer</th>
@@ -175,7 +177,7 @@
                 <th class="sc3" style="left:380px"></th>
                 <template x-for="(m,mi) in currentMonths" :key="'ms'+mi">
                   <template x-for="col in monthCols" :key="'c'+mi+col.key">
-                    <th :class="col.key==='vol' ? 'month-sub font-bold' : (showCalc ? 'month-sub' : 'hidden')"
+                    <th :class="col.key==='vol' ? 'month-sub font-bold' : 'month-sub calc-col'"
                         x-text="col.label" style="min-width:80px"></th>
                   </template>
                 </template>
@@ -186,36 +188,36 @@
               <template x-for="(row,ri) in displayRows" :key="row.id">
                 <tr>
                   <td class="sc0" style="left:0">
-                    <select x-model="row.customerId" @change="onRowCustomerChange(row)" class="ginput">
+                    <select x-effect="$el.value=row.customerId" @change="row.customerId=$event.target.value; onRowCustomerChange(row)" class="ginput">
                       <option value="">— Customer —</option>
-                      <template x-for="c in customers" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
+                      <template x-for="c in customers" :key="c.id"><option :value="c.id" :selected="c.id===row.customerId" x-text="c.name"></option></template>
                     </select>
                   </td>
                   <td class="sc1" style="left:130px">
-                    <select x-model="row.modelId" @change="onRowModelChange(row)" class="ginput">
+                    <select x-effect="$el.value=row.modelId" @change="row.modelId=$event.target.value; onRowModelChange(row)" class="ginput">
                       <option value="">— Model —</option>
-                      <template x-for="m in modelsForCustomer(row.customerId)" :key="m.id"><option :value="m.id" x-text="m.name"></option></template>
+                      <template x-for="m in modelsForCustomer(row.customerId)" :key="m.id"><option :value="m.id" :selected="m.id===row.modelId" x-text="m.name"></option></template>
                     </select>
                   </td>
                   <td class="sc2" style="left:260px">
-                    <select x-model="row.category2" class="ginput">
+                    <select x-effect="$el.value=row.category2" @change="row.category2=$event.target.value" class="ginput">
                       <option value="">—</option>
-                      <template x-for="c2 in modelCat2Options(row.modelId)" :key="c2"><option :value="c2" x-text="c2"></option></template>
+                      <template x-for="c2 in modelCat2Options(row.modelId)" :key="c2"><option :value="c2" :selected="c2===row.category2" x-text="c2"></option></template>
                     </select>
                   </td>
                   <td class="sc3" style="left:380px">
-                    <select x-model="row.category1" class="ginput">
+                    <select x-effect="$el.value=row.category1" @change="row.category1=$event.target.value" class="ginput">
                       <option value="">—</option>
-                      <template x-for="c1 in cat1List" :key="c1"><option :value="c1" x-text="c1"></option></template>
+                      <template x-for="c1 in cat1List" :key="c1"><option :value="c1" :selected="c1===row.category1" x-text="c1"></option></template>
                     </select>
                   </td>
                   <template x-for="(m,mi) in currentMonths" :key="'rv'+ri+mi">
                     <td style="min-width:80px">
                       <input type="number" x-model.number="row.volumes[mi]" class="ginput ginput-num" placeholder="0">
                     </td>
-                    <td x-show="showCalc" class="gcalc" x-text="fmtN(rowRevenue(row,mi))"></td>
-                    <td x-show="showCalc" class="gcalc" x-text="fmtN(rowBomCost(row,mi))"></td>
-                    <td x-show="showCalc" class="gcalc"
+                    <td class="gcalc calc-col" x-text="fmtN(rowRevenue(row,mi))"></td>
+                    <td class="gcalc calc-col" x-text="fmtN(rowBomCost(row,mi))"></td>
+                    <td class="gcalc calc-col"
                         :style="rowGP(row,mi)>=0?'color:#16a34a':'color:#dc2626'"
                         x-text="fmtN(rowGP(row,mi))"></td>
                   </template>
